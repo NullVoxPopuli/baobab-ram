@@ -1,3 +1,5 @@
+import 'ember-cached-decorator-polyfill';
+
 import Application from '@ember/application';
 
 import loadInitializers from 'ember-load-initializers';

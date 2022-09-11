@@ -4,6 +4,8 @@ import "ember-page-title/glint";
 
 import type { HelperLike } from '@glint/template';
 
+// @ts-ignore
+import type RamAnalyzer from 'ui/components/ram-analyzer';
 
 declare module "@glint/environment-ember-loose/registry" {
   export default interface Registry {
@@ -14,6 +16,7 @@ declare module "@glint/environment-ember-loose/registry" {
     /**
      *  Components
      */
+     RamAnalyzer: typeof RamAnalyzer
 
     /**
      * Helpers
