@@ -1,12 +1,21 @@
 {
   "name": "ram-usage-analyzer",
-  "version": "1.0.0",
+  "version": "0.0.1",
   "description": "",
+  "type": "module",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "lint": "eslint . --cache",
+    "lint:fix": "eslint . --fix"
   },
   "keywords": [],
   "author": "NullVoxPopuli",
-  "license": "MIT"
+  "license": "MIT",
+  "dependencies": {
+    "ps-list": "^8.1.0",
+    "server": "^1.0.37"
+  },
+  "devDependencies": {
+    "@types/server": "^1.0.5"
+  }
 }
