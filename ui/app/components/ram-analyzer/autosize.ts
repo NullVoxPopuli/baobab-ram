@@ -38,6 +38,8 @@ class Autosize extends Modifier<Signature> {
       registerDestructor(this, () => {
         window.removeEventListener('resize', this.requestUpdateSize);
       });
+
+      this.requestUpdateSize();
     }
 
     // element.setAttribute('width', `${size}`);
@@ -58,14 +60,16 @@ class Autosize extends Modifier<Signature> {
     if (!this.parentElement) return;
 
     let rect = this.parentElement.getBoundingClientRect();
+    let parentStyles = getComputedStyle(this.parentElement);
+
+    let xPadding = parseFloat(parentStyles.paddingLeft) + parseFloat(parentStyles.paddingRight);
+    let yPadding = parseFloat(parentStyles.paddingTop) + parseFloat(parentStyles.paddingBottom);
 
     let { width, height } = rect;
 
-    let smaller = Math.min(width, height);
+    let smaller = Math.min(width - xPadding, height - yPadding);
 
-    let newSize = smaller;
-
-    this.updateSize(newSize);
+    this.updateSize(smaller);
   };
 }
 

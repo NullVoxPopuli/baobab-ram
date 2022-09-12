@@ -5,6 +5,8 @@
   "type": "module",
   "main": "index.js",
   "scripts": {
+    "start": "node index..js",
+
     "lint": "eslint . --cache",
     "lint:fix": "eslint . --fix"
   },
@@ -12,8 +14,13 @@
   "author": "NullVoxPopuli",
   "license": "MIT",
   "dependencies": {
-    "ps-list": "^8.1.0",
-    "server": "^1.0.37"
+    "express": "^4.18.1",
+    "express-ws": "^5.0.2",
+    "pidtree": "^0.6.0",
+    "pidusage": "^3.0.0"
+  },
+  "engines": {
+    "node": "16.* || 18.*"
   },
   "devDependencies": {
     "@types/server": "^1.0.5"

@@ -63,6 +63,7 @@
     "@types/rsvp": "^4.0.4",
     "babel-eslint": "^10.1.0",
     "broccoli-asset-rev": "^3.0.0",
+    "broccoli-stew": "^3.0.0",
     "concurrently": "^7.4.0",
     "ember-auto-import": "^2.4.2",
     "ember-cached-decorator-polyfill": "^0.1.4",
@@ -90,6 +91,7 @@
     "eslint-plugin-node": "^11.1.0",
     "eslint-plugin-prettier": "^4.2.1",
     "eslint-plugin-qunit": "^7.3.1",
+    "fs-extra": "^10.1.0",
     "loader.js": "^4.7.0",
     "prettier": "^2.7.1",
     "qunit": "^2.19.1",
@@ -106,6 +108,7 @@
   "dependencies": {
     "d3": "^7.6.1",
     "ember-modifier": "^3.2.7",
-    "ember-resources": "^5.4.0"
+    "ember-resources": "^5.4.0",
+    "filesize": "^9.0.11"
   }
 }

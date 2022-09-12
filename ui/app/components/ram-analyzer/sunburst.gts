@@ -16,7 +16,12 @@ import Component from '@glimmer/component';
 import { cached, tracked } from '@glimmer/tracking';
 import { assert } from '@ember/debug';
 
+/**
+  * TODO: switch this to be _just what's used_.
+  * As is, this loads the entirety of d3
+  */
 import * as d3 from 'd3';
+import * as filesize  from 'filesize';
 
 import { Info, type SunburstData } from './info';
 import { autosize } from './autosize';
@@ -35,7 +40,7 @@ interface Data {
 
 export class Sunburst extends Component<Signature> {
   <template>
-    <svg {{autosize this.size this.updateSize}} width="100%" height="100%" style="width: 100%; height: 100%;">
+    <svg {{autosize this.size this.updateSize}} width="100%" height="100%">
       <g fill-opacity={{0.6}}>
         {{#each (descendentsWithDepth this.root) as |node|}}
           <path fill={{this.getColor node}} d={{this.arc node}}>

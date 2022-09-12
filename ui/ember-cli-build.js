@@ -1,6 +1,9 @@
 'use strict';
 
 const EmberApp = require('ember-cli/lib/broccoli/ember-app');
+const stew = require('broccoli-stew');
+const fse = require('fs-extra');
+const path = require('path');
 
 module.exports = function (defaults) {
   let app = new EmberApp(defaults, {
@@ -22,7 +25,7 @@ module.exports = function (defaults) {
 
   const { Webpack } = require('@embroider/webpack');
 
-  return require('@embroider/compat').compatBuild(app, Webpack, {
+  const rootTree = require('@embroider/compat').compatBuild(app, Webpack, {
     staticAddonTestSupportTrees: true,
     staticAddonTrees: true,
     staticHelpers: true,
@@ -34,5 +37,12 @@ module.exports = function (defaults) {
         package: 'qunit',
       },
     ],
+  });
+
+  const dist = path.join(__dirname, 'dist');
+  const target = path.join(__dirname, '..', 'ram-usage-analyzer/site-dist');
+
+  return stew.afterBuild(rootTree, () => {
+    fse.copySync(dist, target, { overwrite: true });
   });
 };
