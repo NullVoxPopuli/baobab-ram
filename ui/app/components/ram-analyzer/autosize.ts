@@ -3,7 +3,7 @@ import { isDestroyed, isDestroying, registerDestructor } from '@ember/destroyabl
 
 import Modifier from 'ember-modifier';
 
-type Positional = [size: number, updateSize: (newSize: number) => void];
+type Positional = [updateSize: (newSize: number) => void];
 
 interface Signature {
   Args: {
@@ -25,15 +25,21 @@ class Autosize extends Modifier<Signature> {
       element instanceof SVGElement
     );
 
-    let [size, updateSize] = positional;
+    let [updateSize] = positional;
 
     this.parentElement = element.parentElement;
+
+    assert(
+      `parent of of the element where {{autosize}} was applied does not exist`,
+      this.parentElement
+    );
 
     if (!this.isSetup) {
       this.updateSize = updateSize;
       this.isSetup = true;
 
       window.addEventListener('resize', this.requestUpdateSize);
+      element.setAttribute('viewBox', viewBoxFor(this.parentElement));
 
       registerDestructor(this, () => {
         window.removeEventListener('resize', this.requestUpdateSize);
@@ -44,7 +50,6 @@ class Autosize extends Modifier<Signature> {
 
     // element.setAttribute('width', `${size}`);
     // element.setAttribute('height', `${size}`);
-    element.setAttribute('viewBox', viewBoxFor(element));
   }
 
   frame?: number;
@@ -73,10 +78,9 @@ class Autosize extends Modifier<Signature> {
   };
 }
 
-function viewBoxFor(element: SVGElement) {
-  assert(`expected element to have a BBox`, element instanceof SVGGraphicsElement);
-
-  let { x, y, width, height } = element.getBBox();
+function viewBoxFor(element: Element) {
+  // but let's put 0,0 in the middle
+  let { x, y, width, height } = element.getBoundingClientRect();
 
   return `${x},${y},${width},${height}`;
 }

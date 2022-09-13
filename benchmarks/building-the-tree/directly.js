@@ -1,57 +1,45 @@
-import * as util from 'node:util';
+import util from 'node:util';
 import fs from 'node:fs/promises';
 
-export async function collectRAMUsage() {
-  try {
-    return await pidRamUsage();
-  } catch (e) {
-    console.error(e.message);
-
-    return { error: e.message };
-  }
-}
-
 /**
- * So... RAM calculation is a mess.
- *
- * ps (cli tool)
- *  - RSS: shared memory, will overlap with other programs that load the same shared libraries
- *  - VSS: virtual memory, often not all of this is loaded into physical memory
- *  - does not show the *name* of the program, but does show the command
- * /proc/{id}/{info-file}
- *  - contain everything
- *  - multiple files need to be accessed to get a full picture
- *  - MacOS does not use /proc -- it seems all Linux distro do tho.
- *  - Windows does not use /proc
- */
-async function pidRamUsage() {
+  * References
+  * - https://betterprogramming.pub/a-memory-friendly-way-of-reading-files-in-node-js-a45ad0cc7bb6
+  *
+  *
+  * Information Needed
+  * - pid
+  * - ppid
+  * - name
+  * - memory (RSS)
+  */
+export async function pidRamUsage() {
   /**
-   * The /proc/{pid}/stat file is way smaller,
-   * yet informationally dense - thus should be
-   * faster to read
-   *
-   * See docs for column assignments
-   * https://man7.org/linux/man-pages/man5/proc.5.html
-   * Columns of interest:
-   * - ppid 3 (1-idx: 4)
-   * - vss 22 (1-idx: 23) -- maybe later
-   * - rss 23 (1-idx: 24)
-   *
-   *   We can't use the name from this file, because it's truncated to 16 characters
-   *
-   * The /proc/{pid}/statm file is even smaller
-   * 0 - total program size, same as VmSize in status
-   * 1 - RSS
-   *
-   * Some of these values are inaccurate because of a kernel-internal scalability optimization
-   *
-   * smaps_rollup contains accurate calculations, but is updated more slowly
-   * https://www.kernel.org/doc/Documentation/ABI/testing/procfs-smaps_rollup
-   */
+    * The /proc/{pid}/stat file is way smaller,
+    * yet informationally dense - thus should be
+    * faster to read
+    *
+    * See docs for column assignments
+    * https://man7.org/linux/man-pages/man5/proc.5.html
+    * Columns of interest:
+    * - ppid 3 (1-idx: 4)
+    * - vss 22 (1-idx: 23) -- maybe later
+    * - rss 23 (1-idx: 24)
+    *
+    *   We can't use the name from this file, because it's truncated to 16 characters
+    *
+    * The /proc/{pid}/statm file is even smaller
+    * 0 - total program size, same as VmSize in status
+    * 1 - RSS
+    *
+    * Some of these values are inaccurate because of a kernel-internal scalability optimization
+    *
+    * smaps_rollup contains accurate calculations, but is updated more slowly
+    * https://www.kernel.org/doc/Documentation/ABI/testing/procfs-smaps_rollup
+    */
 
   let allPids = await fs.readdir('/proc');
 
-  allPids = allPids.map((pid) => parseInt(pid, 10)).filter(Boolean);
+  allPids = allPids.map(pid => parseInt(pid, 10)).filter(Boolean);
 
   let stats = new Map();
   let childrenOf = new Map();
@@ -68,17 +56,17 @@ async function pidRamUsage() {
       let statLine = stat.toString();
       let [, rest] = statLine.split(`(${commFile}) `);
       // console.log({ statLine })
-      let parts = rest.split(' ');
+      let parts = rest.split(' ')
       let ppid = parseInt(parts[1], 10);
       // let vss = rest[]
-      let rss = parts[21];
+      let rss = parts[21]
 
       childrenOf.set(ppid, [...(childrenOf.get(ppid) || []), pid]);
       stats.set(pid, {
         pid,
         name: commFile,
         memory: rss,
-      });
+      })
     })
   );
 
@@ -122,3 +110,5 @@ async function pidRamUsage() {
 
   return root;
 }
+
+await pidRamUsage();

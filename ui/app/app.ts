@@ -1,4 +1,5 @@
 import 'ember-cached-decorator-polyfill';
+import './assets/styles.css';
 
 import Application from '@ember/application';
 

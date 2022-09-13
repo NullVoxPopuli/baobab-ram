@@ -1,28 +1,35 @@
 {
   "name": "ram-usage-analyzer",
-  "version": "0.0.1",
+  "version": "0.0.8",
   "description": "",
   "type": "module",
   "main": "index.js",
   "scripts": {
-    "start": "node index..js",
-
+    "start": "nodemon --ignore ./site-dist/ index.js",
     "lint": "eslint . --cache",
     "lint:fix": "eslint . --fix"
+  },
+  "files": [
+    "index.js",
+    "ram.js",
+    "server.js",
+    "site-dist"
+  ],
+  "bin": {
+    "ram-usage-analyzer": "index.js"
   },
   "keywords": [],
   "author": "NullVoxPopuli",
   "license": "MIT",
   "dependencies": {
     "express": "^4.18.1",
-    "express-ws": "^5.0.2",
-    "pidtree": "^0.6.0",
-    "pidusage": "^3.0.0"
+    "express-ws": "^5.0.2"
   },
   "engines": {
     "node": "16.* || 18.*"
   },
   "devDependencies": {
-    "@types/server": "^1.0.5"
+    "@types/server": "^1.0.5",
+    "nodemon": "^2.0.19"
   }
 }
