@@ -1,0 +1,14 @@
+{
+  "name": "benchmarks",
+  "private": true,
+  "type": "module",
+  "devDependencies": {
+    "execa": "^6.1.0",
+    "find-process": "^1.4.7",
+    "pidusage": "^3.0.0"
+  },
+  "dependencies": {
+    "pidtree": "^0.6.0",
+    "ps": "^1.0.0"
+  }
+}

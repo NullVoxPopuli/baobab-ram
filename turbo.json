@@ -1,0 +1,14 @@
+{
+  "$schema": "https://turborepo.org/schema.json",
+  "pipeline": {
+    "dev": {},
+    "test": {},
+    "lint": { "cache": false },
+    "lint:js": { "cache": false },
+    "lint:hbs": { "cache": false }
+  },
+
+  "globalDependencies": [
+    "pnpm-lock.yaml"
+  ]
+}

@@ -1,0 +1,51 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+  schedule:
+    - cron: "0 3 * * 0" # every Sunday at 3am
+
+env:
+  CI: true
+
+jobs:
+  lint_js:
+    name: Lint JS
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: ./.github/actions/pnpm
+      - name: ESLint
+        run: pnpm lint
+
+  tests_type_checking_ui:
+    name: "Tests: Type Check UI"
+    timeout-minutes: 5
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+      - uses: ./.github/actions/pnpm
+      - run: pnpm glint
+        working-directory: ui
+
+  tests_ui:
+    name: "Tests: UI"
+    timeout-minutes: 5
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: ./.github/actions/pnpm
+      - run: pnpm ember test
+        working-directory: ui
+
+  test_ram_usage_analyzer:
+    name: "Tests: Ram Usage Analyzer"
+    timeout-minutes: 5
+    runs-on: ubuntu-latest
+    steps:
+      - run: 'echo "none yet"'
+
