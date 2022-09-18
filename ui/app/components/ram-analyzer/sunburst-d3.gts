@@ -5,14 +5,13 @@ import Modifier from 'ember-modifier';
 import { use } from 'ember-resources';
 
 import * as d3 from 'd3';
-import * as filesize  from 'filesize';
 
 import { autosize } from './autosize';
-import { Scale, Dimensions, partition, arcVisible, labelVisible, MAX_VISIBLE_DEPTH } from './util';
-import { Info, type SunburstData } from './info';
-import { type HierarchyNode, type Data } from './types';
-
-const getSize = filesize.partial({ base: 2, standard: "jedec" });
+import { Scale, Dimensions, partition, getSize, arcVisible, labelVisible, MAX_VISIBLE_DEPTH } from './util';
+import { Info, type SunburstData, type ProcessInfo, NULL_PID } from './info';
+import { type HierarchyNode } from './types';
+import { ProcessTable } from './process-table';
+import { service } from 'ui/helpers/service';
 
 export class Sunburst extends Component<{
   Args: {
@@ -24,7 +23,7 @@ export class Sunburst extends Component<{
   updateSize = (size: number) => this.size = size;
 
   get data() {
-    return this.args.data.json || { name: '<missing-data>', pid: '0', children: [] };
+    return this.args.data.json || NULL_PID;
   }
 
   /**
@@ -32,16 +31,23 @@ export class Sunburst extends Component<{
     * in particular, the way this.size is updated.
     */
   <template>
-    <svg
-      width="100%" height="100%"
-      {{autosize this.updateSize}}
-      {{Sun this.data this.size
-        free=(getSize @data.freeMemory)
-        allocated=(getSize @data.allocatedMemory)
-        total=(getSize @data.totalMemory)
-      }}
-    >
-    </svg>
+    <div class='w-full h-full'>
+      <svg
+        width="100%" height="100%"
+        {{autosize this.updateSize}}
+        {{Sun this.data this.size
+          free=(getSize @data.freeMemory)
+          allocated=(getSize @data.allocatedMemory)
+          total=(getSize @data.totalMemory)
+        }}
+      ></svg>
+
+      {{#let (service 'settings') as |settings|}}
+        {{#if settings.showTable}}
+          <ProcessTable @data={{@data}} />
+        {{/if}}
+      {{/let}}
+    </div>
   </template>
 }
 
@@ -132,13 +138,13 @@ class Sun extends Modifier<Signature> {
           .attr("fill", d => {
             let ancestor: HierarchyNode | null | undefined = d;
 
-            while (ancestor && parseInt(ancestor.data.pid, 10) > 1000 && (ancestor.depth || 0) > 1) {
+            while (ancestor && (ancestor.data?.memory || 0) > 1000 && (ancestor.depth || 0) > 1) {
               ancestor = ancestor?.parent;
             }
 
             // TODO: Find percent of ancestor's ring
 
-            return this.scale.color(( ancestor ?? d).data.pid);
+            return this.scale.color(`${( ancestor ?? d).data.pid}`);
           })
           .attr("d", d => this.dimensions.arc(d.current))
           .attr("fill-opacity", d => arcVisible(d.current) ? (d.depth / MAX_VISIBLE_DEPTH) : 0)
