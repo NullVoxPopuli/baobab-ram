@@ -18,9 +18,27 @@ export class Sunburst extends Component<{
     data: Info;
   }
 }> {
+  /**
+    * Size of the chart / svg
+    * This is arbitrary, as we need the chart to start with something.
+    * After DOM measurements are taken, this will be updated by the
+    * {{autosize}} modifier
+    */
   @tracked size = 700;
-
   updateSize = (size: number) => this.size = size;
+
+  /**
+    * The current root process PID
+    * In this current implementatino, d3 manages this, but will report changes
+    * to it here.
+    *
+    * This allows us to filter the process table down to what's visible in the graph.
+    *
+    * TODO: make this the source of truth, not d3.
+    */
+  @tracked currentRoot = 1;
+  updateRoot = (newPid: number) => this.currentRoot = newPid;
+
 
   get data() {
     return this.args.data.json || NULL_PID;
@@ -29,6 +47,37 @@ export class Sunburst extends Component<{
   /**
     * None if this is really ergonomic enough to be used individually as public API.
     * in particular, the way this.size is updated.
+    *
+    * Also, all reactivity about the chart is deferred to d3.
+    * This could cause performance problems down the line on low-powered devices.
+    *
+    * TODO: investigate if manually typing out the SVG elements and attributes as
+    *       elements and derived computations is worth the cost of figuring out
+    *       how to do that.
+    *
+    *       The main downside to using the template as the reactive interface is that
+    *       all d3 demos don't care about a consuming UI framework.
+    *
+    *       The problem is that d3 has its own reactivity, and has to diff our
+    *       whole object every time we want to change anything, no matter how
+    *       significant of a change it is.
+    *       Right now, we hack a bunch of manual updates via the modifier's update/modify
+    *       hook. This works, but is wasteful. For example, every time anything changes in
+    *       the modifier's args, we re-render the free/allocated/total summary when those
+    *       DOM nodes should 100% be left alone.
+    *
+    *       With fine-grained reactivity, such as what `@tracked` + auto-tracking
+    *       provides, we can *most optimizedly* update single processes at a time
+    *       (or even just a single property about thoseo processes).
+    *
+    *       Additionally, with fine-grained reactivity, we can pair down our d3 install
+    *       to "just the math parts", and get rid of all the rendering sub-packages.
+    *       This is likely ideal for low-connectivity, low-powered devices.
+    *
+    *       Where it could get tricky is the modelling of sibling data and calculating
+    *       overall size / percent of the arcs.
+    *       But FUD shouldn't keep us from trying, investigating, and reporting back to
+    *       the community with results.
     */
   <template>
     <div class='w-full h-full'>
