@@ -3,4 +3,4 @@ dist/
 .DS_Store
 .turbo/
 .eslintcache
-
+.tsconfig.tsbuildinfo

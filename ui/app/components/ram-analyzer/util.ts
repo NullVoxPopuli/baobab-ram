@@ -2,7 +2,9 @@ import * as d3 from 'd3';
 import { resource, resourceFactory } from 'ember-resources';
 
 import type { SunburstData } from './info';
-import type { Data, HierarchyNode, Size } from './types';
+import type { Data, Size } from './types';
+
+export const MAX_VISIBLE_DEPTH = 10;
 
 export const Dimensions = resourceFactory((sizeFn) => {
   return resource(() => {
@@ -35,8 +37,9 @@ export const Scale = resourceFactory((dataFn) => {
   return resource(() => {
     let data = dataFn();
 
+    let max = data.children.length + 1;
     let helpers = {
-      color: d3.scaleOrdinal(d3.quantize(d3.interpolateRainbow, data.children.length + 1)),
+      color: d3.scaleOrdinal(d3.quantize(d3.interpolateRainbow, max)),
     };
 
     return helpers;

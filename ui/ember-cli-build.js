@@ -94,6 +94,11 @@ module.exports = function (defaults) {
   const dist = path.join(__dirname, 'dist');
   const target = path.join(__dirname, '..', 'ram-usage-analyzer/site-dist');
 
+  if (process.argv.some((arg) => arg === 'test')) {
+    // For tests, we can skip the afterBuild part
+    return rootTree;
+  }
+
   return stew.afterBuild(rootTree, () => {
     fse.copySync(dist, target, { overwrite: true });
   });

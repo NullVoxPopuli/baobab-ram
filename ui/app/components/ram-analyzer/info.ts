@@ -6,7 +6,7 @@ import { Resource, use } from 'ember-resources';
 
 import type Settings from 'ui/services/settings';
 
-type NestedSunburstData =
+export type NestedSunburstData =
   | { name: string; pid: string; value?: never; children: NestedSunburstData[] }
   | { name: string; pid: string; value: number };
 
@@ -105,7 +105,7 @@ class RAMSocket extends Resource<{
     this.websocket.onmessage = (event) => {
       if (this.isPaused) return;
       named.handleMessage(event, this);
-    }
+    };
 
     window.addEventListener('blur', this.stopPoll);
     window.addEventListener('focus', this.poll);
@@ -144,9 +144,10 @@ class RAMSocket extends Resource<{
     }
 
     if (this.settings.pause) return;
+
     if (this.polling) {
       clearTimeout(this.polling);
-    };
+    }
 
     this.settings.isPaused = false;
 

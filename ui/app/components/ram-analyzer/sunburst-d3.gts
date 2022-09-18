@@ -8,9 +8,9 @@ import * as d3 from 'd3';
 import * as filesize  from 'filesize';
 
 import { autosize } from './autosize';
-import { Scale, Dimensions, partition, arcVisible, labelVisible } from './util';
+import { Scale, Dimensions, partition, arcVisible, labelVisible, MAX_VISIBLE_DEPTH } from './util';
 import { Info, type SunburstData } from './info';
-import { type HierarchyNode, type Size } from './types';
+import { type HierarchyNode, type Data } from './types';
 
 const getSize = filesize.partial({ base: 2, standard: "jedec" });
 
@@ -105,7 +105,7 @@ class Sun extends Modifier<Signature> {
       this.setup();
       this.isSetup = true;
     } else {
-      this.root = partition(this.data);
+      this.root = partition(this.data) as HierarchyNode;
       this.root.each(d => d.current = d);
       this.update();
     }
@@ -132,13 +132,16 @@ class Sun extends Modifier<Signature> {
           .attr("fill", d => {
             let ancestor: HierarchyNode | null | undefined = d;
 
-            while ((ancestor?.depth || 0) > 1) {
+            while (ancestor && parseInt(ancestor.data.pid, 10) > 1000 && (ancestor.depth || 0) > 1) {
               ancestor = ancestor?.parent;
             }
-            return this.scale.color(d.data.pid);
+
+            // TODO: Find percent of ancestor's ring
+
+            return this.scale.color(( ancestor ?? d).data.pid);
           })
           .attr("d", d => this.dimensions.arc(d.current))
-          .attr("fill-opacity", d => arcVisible(d.current) ? (d.depth / 10) : 0)
+          .attr("fill-opacity", d => arcVisible(d.current) ? (d.depth / MAX_VISIBLE_DEPTH) : 0)
           .attr("pointer-events", d => arcVisible(d.current) ? "auto" : "none"),
 
         update => update.transition()
@@ -172,8 +175,9 @@ class Sun extends Modifier<Signature> {
   setup() {
     let { width, radius } = this.dimensions;
 
-    let root = this.root = partition(this.data);
+    let root = partition(this.data) as HierarchyNode;
     root.each(d => d.current = d);
+    this.root = root;
     let translate = `translate(${width},${width / 2})`;
 
     let svg = d3.select(this.container)
@@ -254,19 +258,39 @@ class Sun extends Modifier<Signature> {
 
         return t => d.current = i(t);
       })
-      .filter(function(this: SVGPathElement, d) {
-        return +this.getAttribute("fill-opacity") || arcVisible(d.target);
+      .filter(function (d) {
+        assert('path member isnt an SVGPathElement', this instanceof SVGPathElement);
+
+        let opacity = this.getAttribute('fill-opacity');
+
+        if (!opacity) return arcVisible(d.target);
+
+        return parseFloat(opacity) > 0 || arcVisible(d.target);
       })
-      .attr("fill-opacity", d => arcVisible(d.target) ? (d.depth / 10) : 0)
+      .attr("fill-opacity", d => arcVisible(d.target) ? (d.depth / MAX_VISIBLE_DEPTH) : 0)
       .attr("pointer-events", d => arcVisible(d.target) ? "auto" : "none")
-      .attrTween("d", d => () => this.dimensions.arc(d.current));
+      .attrTween("d", d => () => {
+        let arcPath = this.dimensions.arc(d.current)
+
+        // bug in d3 where arc returns potentially null?
+        // maybe a math thing I don't understand that could end up with null?
+        assert(`Arc tween path failed to be created`, arcPath);
+
+        return arcPath;
+      });
 
 
     if (!this.selections.labels) return;
 
     this.selections.labels
-      .filter(function (this: SVGTextElement, d) {
-        return +this.getAttribute("fill-opacity") || labelVisible(d.target);
+      .filter(function (d) {
+        assert('label member isnt an SVGTextElement', this instanceof SVGTextElement);
+
+        let opacity = this.getAttribute('fill-opacity');
+
+        if (!opacity) return labelVisible(d.target);
+
+        return parseFloat(opacity) > 0 || labelVisible(d.target);
       })
       .transition()
       .duration(700)

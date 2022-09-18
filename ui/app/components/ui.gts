@@ -1,4 +1,6 @@
+// @ts-ignore
 import { on } from '@ember/modifier';
+// @ts-ignore
 import { fn } from '@ember/helper';
 import { underscore } from '@ember/string';
 import { type TOC } from '@ember/component/template-only';
@@ -22,8 +24,11 @@ export const Form: TOC<{
   </form>
 </template>;
 
-export const Panel: TOC<{ Blocks: { default: [] }}> = <template>
-  <div class="drop-shadow shadow p-4 backdrop-blur rounded bg-white/45">
+export const Panel: TOC<{
+  Element: HTMLDivElement;
+  Blocks: { default: [] }
+}> = <template>
+  <div class="drop-shadow shadow p-4 backdrop-blur rounded bg-white/45" ...attributes>
     {{yield}}
   </div>
 </template>;

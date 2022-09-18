@@ -52,12 +52,11 @@ class FormSettings extends Resource {
 
         return this.updateIfDifferent('refreshRate', parsed);
       }
-      case 'pause': {
-        return this.updateIfDifferent('pause', value === 'on');
-      }
-      case 'backgroundRefresh': {
-        return this.updateIfDifferent('backgroundRefresh', value === 'on');
-      }
+      // The booleans/checkboxes can all be treated the same
+      case 'pause':
+      case 'backgroundRefresh':
+      case 'showTable':
+        return this.updateIfDifferent(key, value === 'on');
     }
   }
 
@@ -107,6 +106,7 @@ export default class SettingsPanel extends Component {
 
         <Checkbox @name="pause" />
         <Checkbox @name="backgroundRefresh" />
+        <Checkbox @name="showTable" />
 
         {{#if this.settings.isPaused}}
           <hr>

@@ -97,13 +97,15 @@ async function pidRamUsage() {
 
     return {
       name: pidStats.name,
-      pid: '1',
+      pid: pidStats.pid,
+      value: pidStats.memory,
       children: [
-        {
-          pid: `${pidStats.pid}-self`,
-          name: `${pidStats.name} (self)`,
-          value: pidStats.memory,
-        },
+        // Different way of drawing the sunburst
+        // {
+        //   pid: `${pidStats.pid}-self`,
+        //   name: `${pidStats.name} (self)`,
+        //   value: pidStats.memory,
+        // },
         ...children.map((child) => {
           return childrenFor(child);
         }),

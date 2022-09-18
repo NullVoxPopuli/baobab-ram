@@ -39,7 +39,7 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - uses: ./.github/actions/pnpm
-      - run: 'pnpm ember test'
+      - run: pnpm ember test
         working-directory: ui
 
   test_ram_usage_analyzer:
