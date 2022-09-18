@@ -88,12 +88,13 @@ export class Sunburst extends Component<{
           free=(getSize @data.freeMemory)
           allocated=(getSize @data.allocatedMemory)
           total=(getSize @data.totalMemory)
+          updateRoot=this.updateRoot
         }}
       ></svg>
 
       {{#let (service 'settings') as |settings|}}
         {{#if settings.showTable}}
-          <ProcessTable @data={{@data}} />
+          <ProcessTable @data={{this.data}} @rootPid={{this.currentRoot}} />
         {{/if}}
       {{/let}}
     </div>
@@ -122,6 +123,7 @@ interface Signature {
       free: string;
       allocated: string;
       total: string;
+      updateRoot: (newPid: number) => void;
     }
   }
 }
@@ -135,6 +137,7 @@ class Sun extends Modifier<Signature> {
   declare root: HierarchyNode;
   declare forLater: [SunburstData, number];
   declare container: Element;
+  declare updateRoot: (pid: number) => void;
 
   declare parent: d3.Selection<SVGCircleElement, HierarchyNode, null, undefined>;
 
@@ -155,6 +158,7 @@ class Sun extends Modifier<Signature> {
   ) {
     this.container = element;
     this.forLater = positional;
+    this.updateRoot = named.updateRoot;
 
     if (!this.isSetup) {
       this.setup();
@@ -287,7 +291,10 @@ class Sun extends Modifier<Signature> {
   }
 
   clicked = (_event: Event, p: HierarchyNode) => {
-    this.parent.datum(p.parent || this.root);
+    let backNode = p.parent || this.root;
+    this.parent.datum(backNode);
+
+    this.updateRoot(p.data.pid);
 
     this.root.each(d => {
       d.target = {
