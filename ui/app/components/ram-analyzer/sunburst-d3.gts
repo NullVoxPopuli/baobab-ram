@@ -1,14 +1,18 @@
 import Component from '@glimmer/component';
 import { assert } from '@ember/debug';
-import { tracked } from '@glimmer/tracking';
+import { cached, tracked } from '@glimmer/tracking';
 import Modifier from 'ember-modifier';
 import { use } from 'ember-resources';
 
 import * as d3 from 'd3';
 
 import { autosize } from './autosize';
-import { Scale, Dimensions, partition, getSize, arcVisible, labelVisible, MAX_VISIBLE_DEPTH } from './util';
-import { Info, type SunburstData, type ProcessInfo, NULL_PID } from './info';
+import {
+  Scale, Dimensions,
+  scopedTo, partition, getSize, arcVisible, labelVisible,
+  MAX_VISIBLE_DEPTH, NULL_PID
+} from './util';
+import { Info, type SunburstData, type ProcessInfo } from './info';
 import { type HierarchyNode } from './types';
 import { ProcessTable } from './process-table';
 import { service } from 'ui/helpers/service';
@@ -42,6 +46,11 @@ export class Sunburst extends Component<{
 
   get data() {
     return this.args.data.json || NULL_PID;
+  }
+
+  @cached
+  get scopedData() {
+    return scopedTo(this.data, this.currentRoot);
   }
 
   /**
@@ -94,7 +103,7 @@ export class Sunburst extends Component<{
 
       {{#let (service 'settings') as |settings|}}
         {{#if settings.showTable}}
-          <ProcessTable @data={{this.data}} @rootPid={{this.currentRoot}} />
+          <ProcessTable @data={{this.scopedData}} />
         {{/if}}
       {{/let}}
     </div>

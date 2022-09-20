@@ -13,16 +13,6 @@ export interface ProcessInfo {
   rss: number;
   shared: number;
 }
-
-export const NULL_PID: SunburstData = {
-  pid: 0,
-  name: '<missing-data>',
-  memory: 0,
-  rss: 0,
-  shared: 0,
-  children: [],
-};
-
 export type SunburstData = ProcessInfo & {
   children: SunburstData[];
 };

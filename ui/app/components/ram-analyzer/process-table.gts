@@ -1,4 +1,4 @@
-import { NULL_PID, Info, type SunburstData } from './info';
+import { type SunburstData } from './info';
 import { Panel } from '../ui';
 import { type TOC } from '@ember/component/template-only';
 
@@ -34,23 +34,9 @@ function totalRSS(node: SunburstData, root = node): number {
   return result;
 }
 
-const scopedTo = (data: SunburstData, pid: number): SunburstData => {
-  if (data.pid === pid) return data;
-
-
-  for (let process of (data.children ?? [])) {
-    let result = scopedTo(process, pid);
-
-    if (result.pid === pid) return result;
-  }
-
-  return NULL_PID;
-}
-
 export const ProcessTable: TOC<{
   Args: {
     data: SunburstData;
-    rootPid: number;
   }
 }> = <template>
   <Panel class='h-full fixed right-0 top-0 bottom-0 bg-white/70'>
@@ -63,9 +49,7 @@ export const ProcessTable: TOC<{
         </tr>
       </thead>
       <tbody>
-        {{#let (scopedTo @data @rootPid) as |scoped|}}
-          <Row @data={{scoped}} />
-        {{/let}}
+        <Row @data={{@data}} />
       </tbody>
     </table>
   </Panel>

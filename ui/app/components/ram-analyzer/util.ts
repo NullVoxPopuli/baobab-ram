@@ -9,6 +9,27 @@ export const MAX_VISIBLE_DEPTH = 10;
 
 export const getSize = filesize.partial({ base: 2, standard: 'jedec' });
 
+export const NULL_PID: SunburstData = {
+  pid: 0,
+  name: '<missing-data>',
+  memory: 0,
+  rss: 0,
+  shared: 0,
+  children: [],
+};
+
+export const scopedTo = (data: SunburstData, pid: number): SunburstData => {
+  if (data.pid === pid) return data;
+
+  for (let process of data.children ?? []) {
+    let result = scopedTo(process, pid);
+
+    if (result.pid === pid) return result;
+  }
+
+  return NULL_PID;
+};
+
 export const Dimensions = resourceFactory((sizeFn) => {
   return resource(() => {
     let size = sizeFn();
