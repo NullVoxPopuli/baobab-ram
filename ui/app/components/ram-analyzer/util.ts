@@ -90,3 +90,22 @@ export function arcVisible(d: Size) {
 export function labelVisible(d: Size) {
   return d.y1 <= 10 && d.y0 >= 1 && (d.y1 - d.y0) * (d.x1 - d.x0) > 0.03;
 }
+
+let PID_TO_PROCESS_MAP_CACHE = new Map<number, ProcessInfo>();
+let LAST_DATA: SunburstData | undefined;
+
+export function processForPid(pid: number, data: SunburstData) {
+  if (LAST_DATA === data) {
+    let existing = PID_TO_PROCESS_MAP_CACHE.get(pid);
+
+    if (existing) return existing;
+  }
+
+  LAST_DATA = data;
+
+  let found = scopedTo(data, pid);
+
+  PID_TO_PROCESS_MAP_CACHE.set(pid, found);
+
+  return found;
+}

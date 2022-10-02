@@ -6,16 +6,19 @@ import { use } from 'ember-resources';
 
 import * as d3 from 'd3';
 
+import { service } from 'ui/helpers/service';
+
 import { autosize } from './autosize';
 import {
   Scale, Dimensions,
   scopedTo, partition, getSize, arcVisible, labelVisible,
+  processForPid,
   MAX_VISIBLE_DEPTH, NULL_PID
 } from './util';
+import { ProcessTable } from './process-table';
+import { Tooltip } from './tooltip';
 import { Info, type SunburstData, type ProcessInfo } from './info';
 import { type HierarchyNode } from './types';
-import { ProcessTable } from './process-table';
-import { service } from 'ui/helpers/service';
 
 export class Sunburst extends Component<{
   Args: {
@@ -43,6 +46,29 @@ export class Sunburst extends Component<{
   @tracked currentRoot = 1;
   updateRoot = (newPid: number) => this.currentRoot = newPid;
 
+  @tracked hoveredProcess?: ProcessInfo;
+  handleHover = (pid: number) => {
+    if (this.blurFrame) cancelAnimationFrame(this.blurFrame);
+    if (this.blurTimeout) clearTimeout(this.blurTimeout);
+
+    let process = processForPid(pid, this.data);
+    this.hoveredProcess = process;
+  }
+  blurFrame?: number;
+  blurTimeout?: number;
+  handleBlur = (pid: number) => {
+    if (this.blurFrame) cancelAnimationFrame(this.blurFrame);
+    if (this.blurTimeout) clearTimeout(this.blurTimeout);
+
+    let delay = 200; //ms
+    this.blurTimeout = setTimeout(() => {
+      this.blurFrame = requestAnimationFrame(async () => {
+        this.hoveredProcess = undefined;
+        this.blurFrame = undefined;
+        this.blurTimeout = undefined;
+      });
+    }, delay)
+  }
 
   get data() {
     return this.args.data.json || NULL_PID;
@@ -98,6 +124,8 @@ export class Sunburst extends Component<{
           allocated=(getSize @data.allocatedMemory)
           total=(getSize @data.totalMemory)
           updateRoot=this.updateRoot
+          onHover=this.handleHover
+          onBlur=this.handleBlur
         }}
       ></svg>
 
@@ -106,6 +134,8 @@ export class Sunburst extends Component<{
           <ProcessTable @data={{this.scopedData}} />
         {{/if}}
       {{/let}}
+
+      <Tooltip @process={{this.hoveredProcess}} />
     </div>
   </template>
 }
@@ -133,6 +163,8 @@ interface Signature {
       allocated: string;
       total: string;
       updateRoot: (newPid: number) => void;
+      onHover: (pid: number) => void;
+      onBlur: (pid: number) => void;
     }
   }
 }
@@ -147,6 +179,8 @@ class Sun extends Modifier<Signature> {
   declare forLater: [SunburstData, number];
   declare container: Element;
   declare updateRoot: (pid: number) => void;
+  declare handleHover: (pid: number) => void;
+  declare handleBlur: (pid: number) => void;
 
   declare parent: d3.Selection<SVGCircleElement, HierarchyNode, null, undefined>;
 
@@ -168,6 +202,8 @@ class Sun extends Modifier<Signature> {
     this.container = element;
     this.forLater = positional;
     this.updateRoot = named.updateRoot;
+    this.handleHover = named.onHover;
+    this.handleBlur = named.onBlur;
 
     if (!this.isSetup) {
       this.setup();
@@ -208,9 +244,12 @@ class Sun extends Modifier<Signature> {
 
             return this.scale.color(`${( ancestor ?? d).data.pid}`);
           })
+          .attr('id', d => `pid-${d.data.pid}`)
           .attr("d", d => this.dimensions.arc(d.current))
           .attr("fill-opacity", d => arcVisible(d.current) ? (d.depth / MAX_VISIBLE_DEPTH) : 0)
-          .attr("pointer-events", d => arcVisible(d.current) ? "auto" : "none"),
+          .attr("pointer-events", d => arcVisible(d.current) ? "auto" : "none")
+          .on('mouseover', (_, d) => this.handleHover(d.data.pid))
+          .on('mouseout', (_, d) => this.handleBlur(d.data.pid)),
 
         update => update.transition()
           .duration(200)
@@ -230,6 +269,7 @@ class Sun extends Modifier<Signature> {
           .append('text')
           .attr('class', 'label')
           .attr("dy", "0.35em")
+          .attr('id', d => `pid-${d.data.pid}`)
           .attr("fill-opacity", d => +labelVisible(d.current ?? d))
           .attr("transform", d => this.dimensions.labelTransform(d.current))
           .text(d => d.data.name),
