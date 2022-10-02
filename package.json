@@ -5,7 +5,7 @@
   "description": "Monorepo root for the Ram Usage Analyzer",
   "scripts": {
     "start": "concurrently 'npm:start:*' --restart-after 5000 --prefix-colors cyan,white,yellow",
-    "start:ui": "pnpm --filter 'ui' start",
+    "start:ui": "pnpm --filter 'ui' start --port 0",
     "start:server": "pnpm --filter 'ram-usage-analyzer' start",
 
     "publish": "pnpm clean; pnpm build && cd ./ram-usage-analyzer && npm publish",

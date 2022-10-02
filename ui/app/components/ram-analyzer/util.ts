@@ -1,10 +1,34 @@
 import * as d3 from 'd3';
 import { resource, resourceFactory } from 'ember-resources';
+import * as filesize from 'filesize';
 
-import type { SunburstData } from './info';
-import type { Data, Size } from './types';
+import type { ProcessInfo, SunburstData } from './info';
+import type { Size } from './types';
 
 export const MAX_VISIBLE_DEPTH = 10;
+
+export const getSize = filesize.partial({ base: 2, standard: 'jedec' });
+
+export const NULL_PID: SunburstData = {
+  pid: 0,
+  name: '<missing-data>',
+  memory: 0,
+  rss: 0,
+  shared: 0,
+  children: [],
+};
+
+export const scopedTo = (data: SunburstData, pid: number): SunburstData => {
+  if (data.pid === pid) return data;
+
+  for (let process of data.children ?? []) {
+    let result = scopedTo(process, pid);
+
+    if (result.pid === pid) return result;
+  }
+
+  return NULL_PID;
+};
 
 export const Dimensions = resourceFactory((sizeFn) => {
   return resource(() => {
@@ -48,13 +72,13 @@ export const Scale = resourceFactory((dataFn) => {
 
 export const format = d3.format(',d');
 
-export function partition(data: SunburstData): d3.HierarchyRectangularNode<Data> {
+export function partition(data: SunburstData): d3.HierarchyRectangularNode<ProcessInfo> {
   let root = d3
-    .hierarchy<Data>(data)
-    .sum((d) => d.value ?? 0)
+    .hierarchy<ProcessInfo>(data)
+    .sum((d) => d.memory ?? 0)
     .sort((a, b) => (b.value ?? 0) - (a.value ?? 0));
 
-  let partitioned = d3.partition<Data>().size([2 * Math.PI, root.height + 1])(root);
+  let partitioned = d3.partition<ProcessInfo>().size([2 * Math.PI, root.height + 1])(root);
 
   return partitioned;
 }
@@ -65,4 +89,23 @@ export function arcVisible(d: Size) {
 
 export function labelVisible(d: Size) {
   return d.y1 <= 10 && d.y0 >= 1 && (d.y1 - d.y0) * (d.x1 - d.x0) > 0.03;
+}
+
+let PID_TO_PROCESS_MAP_CACHE = new Map<number, ProcessInfo>();
+let LAST_DATA: SunburstData | undefined;
+
+export function processForPid(pid: number, data: SunburstData) {
+  if (LAST_DATA === data) {
+    let existing = PID_TO_PROCESS_MAP_CACHE.get(pid);
+
+    if (existing) return existing;
+  }
+
+  LAST_DATA = data;
+
+  let found = scopedTo(data, pid);
+
+  PID_TO_PROCESS_MAP_CACHE.set(pid, found);
+
+  return found;
 }

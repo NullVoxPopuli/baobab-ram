@@ -1,14 +1,40 @@
 import * as util from 'node:util';
 import fs from 'node:fs/promises';
+import { exec } from 'node:child_process';
+
+// likely 4096 aka 4KB
+let pageSize;
 
 export async function collectRAMUsage() {
   try {
+    await getPageSize();
+
     return await pidRamUsage();
   } catch (e) {
     console.error(e.message);
 
     return { error: e.message };
   }
+}
+
+async function getPageSize() {
+  if (pageSize) return;
+
+  await new Promise((resolve, reject) => {
+    exec('getconf PAGESIZE', (err, stdout) => {
+      if (err) {
+        return reject(err);
+      }
+
+      let output = stdout.toString().trim();
+
+      let _pageSize = parseInt(output, 10);
+
+      pageSize = _pageSize;
+
+      resolve(_pageSize);
+    });
+  });
 }
 
 /**
@@ -58,9 +84,10 @@ async function pidRamUsage() {
 
   await Promise.allSettled(
     allPids.map(async (pid) => {
-      // let statm = await fs.readFile('/proc/1/statm');
-      // let statmFile = statm.toString();
-      // let [vm, rss] = statmFile.split(' ');
+      // https://man7.org/linux/man-pages/man5/proc.5.html
+      let statm = await fs.readFile(`/proc/${pid}/statm`);
+      let statmFile = statm.toString();
+      let [_vm, rss, shared, _text, _lib, _data] = statmFile.split(' ');
       let comm = await fs.readFile(`/proc/${pid}/comm`);
       let commFile = comm.toString().trim();
 
@@ -70,14 +97,27 @@ async function pidRamUsage() {
       // console.log({ statLine })
       let parts = rest.split(' ');
       let ppid = parseInt(parts[1], 10);
-      // let vss = rest[]
-      let rss = parts[21];
+      // let vss = parts[20];
+      // let rss = parts[21];
 
       childrenOf.set(ppid, [...(childrenOf.get(ppid) || []), pid]);
       stats.set(pid, {
         pid,
         name: commFile,
-        memory: rss,
+        // These are all measured in "pages"
+        // To get bytes: * 4096 as a page is 4kb
+        memory: (rss - shared) * pageSize,
+        // size       (1) total program size
+        //            (same as VmSize in /proc/[pid]/status)
+        // resident   (2) resident set size
+        //            (inaccurate; same as VmRSS in /proc/[pid]/status)
+        // shared     (3) number of resident shared pages
+        //            (i.e., backed by a file)
+        //            (inaccurate; same as RssFile+RssShmem in
+        //            /proc/[pid]/status)
+        rss: rss * pageSize,
+        // vss,
+        shared: shared * pageSize,
       });
     })
   );
@@ -88,28 +128,19 @@ async function pidRamUsage() {
       .filter(Boolean);
 
     if (children.length === 0) {
+      // Just return pidStats once value is migrated away from
       return {
-        pid: `${pidStats.pid}`,
-        name: pidStats.name,
+        ...pidStats,
         value: pidStats.memory,
       };
     }
 
     return {
-      name: pidStats.name,
-      pid: pidStats.pid,
+      ...pidStats,
       value: pidStats.memory,
-      children: [
-        // Different way of drawing the sunburst
-        // {
-        //   pid: `${pidStats.pid}-self`,
-        //   name: `${pidStats.name} (self)`,
-        //   value: pidStats.memory,
-        // },
-        ...children.map((child) => {
-          return childrenFor(child);
-        }),
-      ],
+      children: children.map((child) => {
+        return childrenFor(child);
+      }),
     };
   };
 

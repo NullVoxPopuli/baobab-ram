@@ -32,7 +32,7 @@ export default class Settings extends Service {
   // The Actual Settings
   @stored refreshRate = 1;
   @stored backgroundRefresh = false;
-  @stored showTable = false;
+  @stored showTable = true;
 
   @tracked pause = false;
 
