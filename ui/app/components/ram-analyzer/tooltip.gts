@@ -1,6 +1,7 @@
 import { DefaultTooltip, tooltipFor } from './tooltips';
 import velcro from 'ember-velcro/modifiers/velcro';
 import load from 'ember-async-data/helpers/load';
+import { on } from '@ember/modifier';
 
 import { Panel } from 'ui/components/ui';
 
@@ -12,16 +13,18 @@ const idFor = (process: ProcessInfo) => `text#pid-${process.pid}`;
 export const Tooltip: TOC<{
   Element: HTMLDivElement;
   Args: {
-    process: ProcessInfo;
+    process?: ProcessInfo;
+    onEnter?: () => void;
   }
 }> =
   <template>
     {{#if @process}}
       <Panel
         ...attributes
-        class="grid gap-2"
+        class="grid gap-2 shadow-2xl"
         {{velcro (idFor @process)}}
       >
+
 
         {{! Types are incorrect for load }}
 
@@ -47,3 +50,9 @@ export const Tooltip: TOC<{
       </Panel>
     {{/if}}
   </template>;
+        // <button {{on 'click' @onEnter}}>
+        //   Focus
+        // </button>
+        // <button {{on 'click' @onEnter}}>
+        //   Up
+        // </button>

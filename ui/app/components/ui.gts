@@ -28,7 +28,7 @@ export const Panel: TOC<{
   Element: HTMLDivElement;
   Blocks: { default: [] }
 }> = <template>
-  <div class="drop-shadow shadow p-4 backdrop-blur rounded bg-white/55" ...attributes>
+  <div class="drop-shadow shadow p-4 backdrop-blur rounded bg-white/75" ...attributes>
     {{yield}}
   </div>
 </template>;

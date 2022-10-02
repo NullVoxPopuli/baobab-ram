@@ -231,7 +231,8 @@ class Sun extends Modifier<Signature> {
       .join(
         enter => enter
           .append('path')
-          .attr('class', 'arc')
+          .attr('class', 'arc outline:none focus:ring-offset-2 focus:ring')
+          .attr('tabindex', '0')
           .each(d => d.current = d)
           .attr("fill", d => {
             let ancestor: HierarchyNode | null | undefined = d;
@@ -259,6 +260,7 @@ class Sun extends Modifier<Signature> {
 
     this.selections.paths.filter(d => Boolean(d.children?.length))
       .style("cursor", "pointer")
+      // .on('click', (_, d) => this.handleHover(d.data.pid))
       .on("click", this.clicked);
 
     this.selections.labels = this.selections.labelG
