@@ -229,28 +229,31 @@ class Sun extends Modifier<Signature> {
       .selectAll('.arc')
       .data(firstDescendant, (d) => (d as HierarchyNode).data.pid)
       .join(
-        enter => enter
-          .append('path')
-          .attr('class', 'arc outline:none focus:ring-offset-2 focus:ring')
-          .attr('tabindex', '0')
-          .each(d => d.current = d)
-          .attr("fill", d => {
-            let ancestor: HierarchyNode | null | undefined = d;
+        enter => {
+          return enter
+            .append('path')
+            .attr('class', `arc
+                  focus:outline-none focus:stroke-2 focus:stroke-blue-500 hover:drop-shadow-md`)
+            .attr('tabindex', '0')
+            .each(d => d.current = d)
+            .attr("fill", d => {
+              let ancestor: HierarchyNode | null | undefined = d;
 
-            while (ancestor && (ancestor.data?.memory || 0) > 1000 && (ancestor.depth || 0) > 1) {
-              ancestor = ancestor?.parent;
-            }
+              while (ancestor && (ancestor.data?.memory || 0) > 1000 && (ancestor.depth || 0) > 1) {
+                ancestor = ancestor?.parent;
+              }
 
-            // TODO: Find percent of ancestor's ring
+              // TODO: Find percent of ancestor's ring
 
-            return this.scale.color(`${( ancestor ?? d).data.pid}`);
-          })
-          .attr('id', d => `pid-${d.data.pid}`)
-          .attr("d", d => this.dimensions.arc(d.current))
-          .attr("fill-opacity", d => arcVisible(d.current) ? (d.depth / MAX_VISIBLE_DEPTH) : 0)
-          .attr("pointer-events", d => arcVisible(d.current) ? "auto" : "none")
-          .on('mouseover', (_, d) => this.handleHover(d.data.pid))
-          .on('mouseout', (_, d) => this.handleBlur(d.data.pid)),
+              return this.scale.color(`${( ancestor ?? d).data.pid}`);
+            })
+            .attr('id', d => `pid-${d.data.pid}`)
+            .attr("d", d => this.dimensions.arc(d.current))
+            .attr("fill-opacity", d => arcVisible(d.current) ? (d.depth / MAX_VISIBLE_DEPTH) : 0)
+            .attr("pointer-events", d => arcVisible(d.current) ? "auto" : "none")
+            .on('mouseover', (_, d) => this.handleHover(d.data.pid))
+            .on('mouseout', (_, d) => this.handleBlur(d.data.pid))
+        },
 
         update => update.transition()
           .duration(200)
