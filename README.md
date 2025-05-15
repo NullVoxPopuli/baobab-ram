@@ -1,8 +1,11 @@
 # baobab-ram
 
+
 This is the monorepo that produces the `ram-usage-analyzer`.
 
 _A lightweight alternative to the linux package, [smem][ubuntu-smem]_.
+
+Demo: https://x.com/nullvoxpopuli/status/1571271542276775938
 
 [ubuntu-smem]: https://manpages.ubuntu.com/manpages/trusty/man8/smem.8.html
 
