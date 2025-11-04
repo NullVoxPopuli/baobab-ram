@@ -1,6 +1,7 @@
 import Component from "@glimmer/component";
 import { cached, tracked } from "@glimmer/tracking";
 import { assert } from "@ember/debug";
+import { on } from "@ember/modifier";
 
 import * as d3 from "d3";
 import Modifier from "ember-modifier";
@@ -61,6 +62,20 @@ export class Sunburst extends Component<{
 
     this.hoveredProcess = process;
   };
+
+  zoomToRoot = () => {
+    // Find the Sun modifier and trigger a click on the root
+    const sunModifier = this.sunModifierInstance;
+    if (sunModifier && sunModifier.root) {
+      // Simulate clicking on the root to zoom all the way out
+      sunModifier.clicked(new Event('click'), sunModifier.root);
+    }
+  };
+
+  sunModifierInstance?: Sun;
+  setSunModifierRef = (modifier: Sun) => {
+    this.sunModifierInstance = modifier;
+  };
   blurFrame?: number;
   blurTimeout?: number;
   handleBlur = (pid: number) => {
@@ -85,6 +100,11 @@ export class Sunburst extends Component<{
   @cached
   get scopedData() {
     return scopedTo(this.data, this.currentRoot);
+  }
+
+  get showZoomToRootButton() {
+    // Show button when not at the root (PID 1)
+    return this.currentRoot !== 1;
   }
 
   /**
@@ -123,7 +143,7 @@ export class Sunburst extends Component<{
    *       the community with results.
    */
   <template>
-    <div class="w-full h-full">
+    <div class="w-full h-full relative">
       <svg
         width="100%"
         height="100%"
@@ -137,8 +157,23 @@ export class Sunburst extends Component<{
           updateRoot=this.updateRoot
           onHover=this.handleHover
           onBlur=this.handleBlur
+          setModifierRef=this.setSunModifierRef
         }}
       ></svg>
+
+      {{! Zoom to root button - only show when not at root }}
+      {{#if this.showZoomToRootButton}}
+        <button
+          type="button"
+          class="absolute bottom-4 left-4 bg-blue-600 hover:bg-blue-700 text-white rounded-full p-2 shadow-lg transition-colors duration-200 z-10"
+          title="Zoom to root"
+          {{on "click" this.zoomToRoot}}
+        >
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path>
+          </svg>
+        </button>
+      {{/if}}
 
       {{#let (service "settings") as |settings|}}
         {{#if settings.showTable}}
@@ -186,6 +221,7 @@ interface Signature {
       updateRoot: (newPid: number) => void;
       onHover: (pid: number) => void;
       onBlur: (pid: number) => void;
+      setModifierRef?: (modifier: Sun) => void;
     };
   };
 }
@@ -195,6 +231,15 @@ class Sun extends Modifier<Signature> {
   @use scale = Scale(() => this.data);
 
   selections: Partial<Selections> = {};
+  activeTransition?: d3.Transition<any, any, any, any>;
+  lastClickTime = 0;
+  clickDebounceMs = 100; // Prevent rapid clicks
+
+  // Add state management for race condition prevention
+  isTransitioning = false;
+  pendingUpdate = false;
+  lastDataUpdateId = 0;
+  currentDataId = 0;
 
   declare root: HierarchyNode;
   declare forLater: [SunburstData, number];
@@ -219,6 +264,8 @@ class Sun extends Modifier<Signature> {
   }
 
   isSetup = false;
+  currentZoomNode?: HierarchyNode;
+
   modify(
     element: Element,
     positional: Signature["Args"]["Positional"],
@@ -230,18 +277,111 @@ class Sun extends Modifier<Signature> {
     this.handleHover = named.onHover;
     this.handleBlur = named.onBlur;
 
+    // Store reference to this modifier instance
+    if (named.setModifierRef) {
+      named.setModifierRef(this);
+    }
+
+    // Increment data ID to track data changes
+    this.currentDataId++;
+
     if (!this.isSetup) {
       this.setup();
       this.isSetup = true;
+      this.lastDataUpdateId = this.currentDataId;
     } else {
-      this.root = partition(this.data) as HierarchyNode;
-      this.root.each((d) => (d.current = d));
-      this.update();
+      // Check if we're in the middle of a user-initiated transition
+      if (this.isTransitioning) {
+        // Mark that we have a pending update and return early
+        this.pendingUpdate = true;
+        return;
+      }
+
+      this.processDataUpdate();
     }
 
     this.selections.freeMemory?.text(`${named.free} Free`);
     this.selections.allocatedMemory?.text(`${named.allocated} Allocated`);
     this.selections.totalMemory?.text(`${named.total} Total`);
+  }
+
+  processDataUpdate() {
+    // Preserve zoom state during updates
+    const previousZoomNode = this.currentZoomNode;
+    const previousZoomPid = previousZoomNode?.data.pid;
+
+    // Store current visual state before updating data (preserve zoom state)
+    const preservedCurrentState = new Map();
+    const preservedTargetState = new Map();
+    if (this.root) {
+      this.root.descendants().forEach(d => {
+        preservedCurrentState.set(d.data.pid, { ...d.current });
+        if (d.target) {
+          preservedTargetState.set(d.data.pid, { ...d.target });
+        }
+      });
+    }
+
+    // Update data structure
+    this.root = partition(this.data) as HierarchyNode;
+
+    // Initialize with base state only if we don't have preserved state
+    if (!previousZoomNode) {
+      this.root.each((d) => (d.current = d));
+    }
+
+    // If we were zoomed to a specific node, try to find and restore that state
+    if (previousZoomNode && previousZoomPid) {
+      const newZoomNode = this.findNodeByPid(this.root, previousZoomPid);
+      if (newZoomNode) {
+        this.currentZoomNode = newZoomNode;
+
+        // Restore visual states for existing nodes, initialize new nodes appropriately
+        this.root.descendants().forEach(d => {
+          const preservedCurrent = preservedCurrentState.get(d.data.pid);
+          const preservedTarget = preservedTargetState.get(d.data.pid);
+
+          if (preservedCurrent) {
+            // Existing node - restore its visual state
+            d.current = preservedCurrent;
+            if (preservedTarget) {
+              d.target = preservedTarget;
+            }
+          } else {
+            // New node - initialize with appropriate zoom state
+            const target = {
+              x0: Math.max(0, Math.min(1, (d.x0 - newZoomNode.x0) / (newZoomNode.x1 - newZoomNode.x0))) * 2 * Math.PI,
+              x1: Math.max(0, Math.min(1, (d.x1 - newZoomNode.x0) / (newZoomNode.x1 - newZoomNode.x0))) * 2 * Math.PI,
+              y0: Math.max(0, d.y0 - newZoomNode.depth),
+              y1: Math.max(0, d.y1 - newZoomNode.depth),
+            };
+            d.current = target;
+            d.target = target;
+          }
+        });
+
+        // Update parent circle for zoom-out behavior
+        const backNode = newZoomNode.parent || this.root;
+        if (this.parent) {
+          this.parent.datum(backNode);
+        }
+      } else {
+        // The zoomed node no longer exists, reset to root
+        this.currentZoomNode = undefined;
+        this.updateRoot(this.root.data.pid);
+        this.root.each((d) => (d.current = d));
+      }
+    } else {
+      // No zoom state to preserve, initialize normally
+      this.root.each((d) => (d.current = d));
+    }
+
+    // Only call update if no active transition is running
+    if (!this.activeTransition) {
+      this.update();
+    }
+
+    this.lastDataUpdateId = this.currentDataId;
   }
 
   update = () => {
@@ -295,6 +435,12 @@ class Sun extends Modifier<Signature> {
           update
             .transition()
             .duration(200)
+            .attr("fill-opacity", (d) =>
+              arcVisible(d.current) ? d.depth / MAX_VISIBLE_DEPTH : 0,
+            )
+            .attr("pointer-events", (d) =>
+              arcVisible(d.current) ? "auto" : "none",
+            )
             .attr("d", (d) => this.dimensions.arc(d.current)),
         (exit) => exit.remove(),
       );
@@ -322,6 +468,7 @@ class Sun extends Modifier<Signature> {
           update
             .transition()
             .duration(200)
+            .attr("fill-opacity", (d) => +labelVisible(d.current ?? d))
             .attr("transform", (d) =>
               this.dimensions.labelTransform(d.current),
             ),
@@ -399,13 +546,129 @@ class Sun extends Modifier<Signature> {
       .attr("dy", "1.2em");
   }
 
-  clicked = (_event: Event, p: HierarchyNode) => {
-    const backNode = p.parent || this.root;
+  findNodeByPid(root: HierarchyNode, targetPid: number): HierarchyNode | null {
+    // Early return for exact match
+    if (root.data.pid === targetPid) {
+      return root;
+    }
 
+    // Early return if no children
+    if (!root.children?.length) {
+      return null;
+    }
+
+    // Search children
+    for (const child of root.children) {
+      const found = this.findNodeByPid(child, targetPid);
+      if (found) return found;
+    }
+
+    return null;
+  }
+
+  applyZoomState(zoomNode: HierarchyNode, preserveCurrent = false) {
+    // Don't cancel transitions here as this might be called during data updates
+    // Only apply state synchronously for immediate visual consistency
+
+    // Calculate zoom transforms
+    this.root.each((d) => {
+      const target = {
+        x0:
+          Math.max(0, Math.min(1, (d.x0 - zoomNode.x0) / (zoomNode.x1 - zoomNode.x0))) * 2 * Math.PI,
+        x1:
+          Math.max(0, Math.min(1, (d.x1 - zoomNode.x0) / (zoomNode.x1 - zoomNode.x0))) * 2 * Math.PI,
+        y0: Math.max(0, d.y0 - zoomNode.depth),
+        y1: Math.max(0, d.y1 - zoomNode.depth),
+      };
+      d.target = target;
+
+      // Only update current if we're not preserving the visual state
+      if (!preserveCurrent) {
+        d.current = target;
+      }
+    });
+
+    // Update parent circle for zoom-out behavior
+    const backNode = zoomNode.parent || this.root;
+    if (this.parent) {
+      this.parent.datum(backNode);
+    }
+
+    // Force immediate update of visuals only if no active transition and not preserving state
+    if (!this.isTransitioning && !preserveCurrent) {
+      this.updateVisuals();
+    }
+  }
+
+  cancelActiveTransition() {
+    if (this.selections.paths) {
+      this.selections.paths.interrupt();
+    }
+    if (this.selections.labels) {
+      this.selections.labels.interrupt();
+    }
+    this.activeTransition = undefined;
+    this.isTransitioning = false;
+
+    // Process any pending updates after transition is cancelled
+    this.processPendingUpdates();
+  }
+
+  processPendingUpdates() {
+    if (this.pendingUpdate && this.currentDataId > this.lastDataUpdateId) {
+      this.pendingUpdate = false;
+      this.processDataUpdate();
+    }
+  }
+
+  updateVisuals() {
+    // Update paths immediately without animation
+    if (this.selections.paths) {
+      this.selections.paths
+        .attr("fill-opacity", (d) =>
+          arcVisible(d.current) ? d.depth / MAX_VISIBLE_DEPTH : 0,
+        )
+        .attr("pointer-events", (d) =>
+          arcVisible(d.current) ? "auto" : "none",
+        )
+        .attr("d", (d) => this.dimensions.arc(d.current));
+    }
+
+    // Update labels immediately without animation
+    if (this.selections.labels) {
+      this.selections.labels
+        .attr("fill-opacity", (d) => +labelVisible(d.current))
+        .attr("transform", (d) => this.dimensions.labelTransform(d.current));
+    }
+  }
+
+  clicked = (_event: Event, p: HierarchyNode) => {
+    // Debounce rapid clicks to prevent glitching
+    const now = Date.now();
+    if (now - this.lastClickTime < this.clickDebounceMs) {
+      return;
+    }
+    this.lastClickTime = now;
+
+    // Cancel any ongoing transitions first
+    this.cancelActiveTransition();
+
+    // Mark that we're starting a user-initiated transition
+    this.isTransitioning = true;
+
+    const backNode = p.parent || this.root;
     this.parent.datum(backNode);
+
+    // If clicking the root node or going back to parent, reset zoom state
+    if (p === this.root || p.parent === null || p.data.pid === this.root.data.pid) {
+      this.currentZoomNode = undefined;
+    } else {
+      this.currentZoomNode = p; // Track the current zoom state
+    }
 
     this.updateRoot(p.data.pid);
 
+    // Calculate target positions for animation (don't set current immediately)
     this.root.each((d) => {
       d.target = {
         x0:
@@ -420,10 +683,10 @@ class Sun extends Modifier<Signature> {
     if (!this.selections.rootG) return;
     if (!this.selections.paths) return;
 
-    // Transition the data on all arcs, even the ones that aren’t visible,
+    // Transition the data on all arcs, even the ones that aren't visible,
     // so that if this transition is interrupted, entering arcs will start
     // the next transition from the desired position.
-    this.selections.paths
+    const pathTransition = this.selections.paths
       .transition()
       .duration(700)
       .tween("data", (d) => {
@@ -455,18 +718,31 @@ class Sun extends Modifier<Signature> {
         assert(`Arc tween path failed to be created`, arcPath);
 
         return arcPath;
+      })
+      .on("end", () => {
+        // Clear the active transition when animation completes
+        this.activeTransition = undefined;
+        this.isTransitioning = false;
+        // Process any pending updates after transition completes
+        this.processPendingUpdates();
+      })
+      .on("interrupt", () => {
+        // Handle transition interruption
+        this.activeTransition = undefined;
+        this.isTransitioning = false;
+        this.processPendingUpdates();
       });
 
     if (!this.selections.labels) return;
 
     this.selections.labels
-      .filter(function (d) {
+      .filter(function (d: any) {
         assert(
           "label member isnt an SVGTextElement",
           this instanceof SVGTextElement,
         );
 
-        const opacity = this.getAttribute("fill-opacity");
+        const opacity = (this as SVGTextElement).getAttribute("fill-opacity");
 
         if (!opacity) return labelVisible(d.target);
 
@@ -474,10 +750,20 @@ class Sun extends Modifier<Signature> {
       })
       .transition()
       .duration(700)
-      .attr("fill-opacity", (d) => +labelVisible(d.target))
+      .attr("fill-opacity", (d: any) => +labelVisible(d.target))
       .attrTween(
         "transform",
-        (d) => () => this.dimensions.labelTransform(d.current),
+        (d: any) => () => this.dimensions.labelTransform(d.current),
       );
+
+    // Track the active transition (use path transition as primary)
+    this.activeTransition = pathTransition as any;
   };
+
+  willDestroy() {
+    // Clean up any active transitions and timers when the modifier is destroyed
+    this.cancelActiveTransition();
+    this.pendingUpdate = false;
+    this.isTransitioning = false;
+  }
 }
