@@ -1,10 +1,18 @@
-import { tracked } from '@glimmer/tracking';
-import { isDestroyed, isDestroying, registerDestructor } from '@ember/destroyable';
-import { service } from '@ember/service';
+/* eslint-disable @typescript-eslint/no-unsafe-member-access */
+/* eslint-disable @typescript-eslint/no-unsafe-assignment */
+/* eslint-disable @typescript-eslint/no-unsafe-argument */
+import Component from "@glimmer/component";
+import { tracked } from "@glimmer/tracking";
+import {
+  isDestroyed,
+  isDestroying,
+  registerDestructor,
+} from "@ember/destroyable";
+import { service } from "@ember/service";
 
-import { Resource, use } from 'ember-resources';
+import { link } from "reactiveweb/link";
 
-import type Settings from 'ui/services/settings';
+import type Settings from "#services/settings.ts";
 
 export interface ProcessInfo {
   pid: number;
@@ -17,7 +25,11 @@ export type SunburstData = ProcessInfo & {
   children: SunburstData[];
 };
 
-export class Info extends Resource {
+export class Info extends Component<{
+  Blocks: {
+    default: [Info];
+  };
+}> {
   @service declare settings: Settings;
 
   @tracked json?: SunburstData;
@@ -43,19 +55,19 @@ export class Info extends Resource {
     return !this.isLoading;
   }
 
-  @use socket = RAMSocket.from(() => ({
+  @link socket = new RAMSocket({
     handleMessage: (event: MessageEvent, ctx: RAMSocket) => {
       const json = JSON.parse(event.data);
 
-      if ('totalMemory' in json) {
+      if ("totalMemory" in json) {
         this.totalMemory = json.totalMemory;
       }
 
-      if ('freeMemory' in json) {
+      if ("freeMemory" in json) {
         this.freeMemory = json.freeMemory;
       }
 
-      if ('processes' in json) {
+      if ("processes" in json) {
         // TODO: instead of invalidating the whole object,
         //       recursively apply only the changes
         //       - memory values
@@ -70,53 +82,56 @@ export class Info extends Resource {
         ctx.poll();
       }
     },
-  }));
+  });
 
-  modify() {
+  toggleSocket = () => {
     if (this.settings.pause) {
       this.socket.pause();
     } else {
       this.socket.resume();
     }
-  }
+  };
+
+  <template>
+    {{(this.toggleSocket)}}
+
+    {{yield this}}
+  </template>
 }
 
 const ONE_SECOND = 1_000;
 
-class RAMSocket extends Resource<{
-  Named: {
+class RAMSocket {
+  constructor(args: {
     handleMessage: (event: MessageEvent, socket: RAMSocket) => void;
-  };
-}> {
+  }) {
+    this.websocket = new WebSocket("ws://localhost:3000/ws");
+
+    this.websocket.onopen = () => {
+      this.send({ type: "total" });
+      this.send({ type: "processes" });
+    };
+
+    this.websocket.onmessage = (event) => {
+      if (this.isPaused) return;
+      args.handleMessage(event, this);
+    };
+
+    window.addEventListener("blur", this.stopPoll);
+    window.addEventListener("focus", this.poll);
+
+    registerDestructor(this, () => {
+      this.websocket.close();
+
+      window.removeEventListener("blur", this.stopPoll);
+      window.removeEventListener("focus", this.poll);
+    });
+  }
   @service declare settings: Settings;
 
   declare websocket: WebSocket;
 
   isPaused = false;
-
-  modify(_: never[], named: { handleMessage: (event: MessageEvent, socket: RAMSocket) => void }) {
-    this.websocket = new WebSocket('ws://localhost:3000/ws');
-
-    this.websocket.onopen = () => {
-      this.send({ type: 'total' });
-      this.send({ type: 'processes' });
-    };
-
-    this.websocket.onmessage = (event) => {
-      if (this.isPaused) return;
-      named.handleMessage(event, this);
-    };
-
-    window.addEventListener('blur', this.stopPoll);
-    window.addEventListener('focus', this.poll);
-
-    registerDestructor(this, () => {
-      this.websocket.close();
-
-      window.removeEventListener('blur', this.stopPoll);
-      window.removeEventListener('focus', this.poll);
-    });
-  }
 
   send = (payload: unknown) => {
     this.websocket.send(JSON.stringify(payload));
@@ -126,7 +141,10 @@ class RAMSocket extends Resource<{
     this.isPaused = true;
 
     clearTimeout(this.polling);
-    this.polling = setTimeout(this.poll, this.settings.refreshRate * ONE_SECOND);
+    this.polling = setTimeout(
+      this.poll,
+      this.settings.refreshRate * ONE_SECOND,
+    );
   };
   resume = () => {
     this.isPaused = false;
@@ -138,7 +156,10 @@ class RAMSocket extends Resource<{
     if (this.isPaused) {
       clearTimeout(this.polling);
 
-      this.polling = setTimeout(this.poll, this.settings.refreshRate * ONE_SECOND);
+      this.polling = setTimeout(
+        this.poll,
+        this.settings.refreshRate * ONE_SECOND,
+      );
 
       return;
     }
@@ -155,8 +176,8 @@ class RAMSocket extends Resource<{
       if (isDestroyed(this) || isDestroying(this)) return;
 
       this.polling = undefined;
-      this.send({ type: 'total' });
-      this.send({ type: 'processes' });
+      this.send({ type: "total" });
+      this.send({ type: "processes" });
     }, this.settings.refreshRate * ONE_SECOND);
   };
   stopPoll = () => {

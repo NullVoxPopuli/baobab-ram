@@ -28,12 +28,12 @@
     "@embroider/core": "^4.0.3",
     "@embroider/vite": "^1.1.1",
     "@glimmer/component": "^2.0.0",
-    "@glimmer/tracking": "^1.1.2",
     "@glint/ember-tsc": "^1.0.7",
     "@glint/template": "^1.7.2",
     "@glint/tsserver-plugin": "^2.0.7",
     "@nullvoxpopuli/eslint-configs": "^5.3.4",
     "@rollup/plugin-babel": "^6.0.4",
+    "@tailwindcss/vite": "^4.1.16",
     "@types/d3": "^7.4.0",
     "@types/d3-format": "^3.0.1",
     "@types/d3-hierarchy": "^3.1.0",
@@ -54,7 +54,7 @@
     "eslint": "^9.39.1",
     "prettier": "^3.6.2",
     "prettier-plugin-ember-template-tag": "^2.1.0",
-    "tailwindcss": "^3.1.8",
+    "tailwindcss": "^4.1.16",
     "typescript": "^5.9.3",
     "vite": "^7.1.12"
   },
@@ -73,12 +73,19 @@
     "d3-scale": "^4.0.2",
     "d3-shape": "^3.1.0",
     "ember-modifier": "^4.2.2",
+    "ember-primitives": "^0.40.0",
     "ember-resources": "^7.0.7",
-    "filesize": "^11.0.13"
+    "ember-strict-application-resolver": "^0.1.0",
+    "filesize": "^11.0.13",
+    "reactiveweb": "^1.9.0"
   },
   "ember-addon": {
     "type": "app",
     "version": 2
+  },
+  "imports": {
+    "#ui": "./app/components/ui.gts",
+    "#services/*": "./app/services/*"
   },
   "exports": {
     "./tests/*": "./tests/*",

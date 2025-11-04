@@ -1,6 +1,7 @@
 {
   "name": "baobab-ram",
   "version": "0.0.0",
+  "type": "module",
   "private": true,
   "description": "Monorepo root for the Ram Usage Analyzer",
   "scripts": {
@@ -39,6 +40,8 @@
   },
   "devDependencies": {
     "concurrently": "^9.2.1",
+    "prettier": "^3.6.2",
+    "prettier-plugin-ember-template-tag": "^2.1.0",
     "turbo": "^2.6.0"
   }
 }

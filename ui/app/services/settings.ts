@@ -1,8 +1,7 @@
- 
-import { tracked } from '@glimmer/tracking';
+import { tracked } from "@glimmer/tracking";
 // Using this API, because I don't want to install the ember-storage-primitives-polyfill
-import { get, notifyPropertyChange } from '@ember/object';
-import Service from '@ember/service';
+import { get, notifyPropertyChange } from "@ember/object";
+import Service from "@ember/service";
 
 function _stored(target: object, key: string, _descriptor: PropertyDescriptor) {
   return {
@@ -10,10 +9,12 @@ function _stored(target: object, key: string, _descriptor: PropertyDescriptor) {
     enumerable: true,
     get() {
       const serialized = window.localStorage.getItem(`settings-${key}`);
-      const parsed = JSON.parse(serialized || '{}');
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+      const parsed = JSON.parse(serialized || "{}");
 
       get(this, `_${key}`);
 
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-member-access
       return parsed.value;
     },
     set(value: unknown) {
@@ -41,7 +42,7 @@ export default class Settings extends Service {
 }
 
 // DO NOT DELETE: this is how TypeScript knows how to look up your services.
-declare module '@ember/service' {
+declare module "@ember/service" {
   interface Registry {
     settings: Settings;
   }
