@@ -92,6 +92,7 @@ async function pidRamUsage() {
       const [_vm, rss, shared, _text, _lib, _data] = statmFile.split(' ');
       const comm = await fs.readFile(`${proc}/${pid}/comm`);
       const commFile = comm.toString().trim();
+      const cmdline = (await fs.readFile(`${proc}/${pid}/cmdline`)).toString().trim();
 
       const stat = await fs.readFile(`${proc}/${pid}/stat`);
       const statLine = stat.toString();
@@ -106,6 +107,7 @@ async function pidRamUsage() {
       stats.set(pid, {
         pid,
         name: commFile,
+        command: cmdline,
         // These are all measured in "pages"
         // To get bytes: * 4096 as a page is 4kb
         memory: (rss - shared) * pageSize,
