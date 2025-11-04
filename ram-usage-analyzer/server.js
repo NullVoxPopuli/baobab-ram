@@ -4,23 +4,24 @@ import * as url from 'node:url';
 
 import express from 'express';
 import setupWS from 'express-ws';
+import getPort from 'get-port';
 
 import { collectRAMUsage } from './ram.js';
 
 const __dirname = url.fileURLToPath(new URL('.', import.meta.url));
 
 const ASSETS = path.join(__dirname, 'site-dist');
-const PORT = 3000;
+const PREFERRED_PORT = 3000;
 const HOST = 'localhost';
 
-const welcome = () => {
+const welcome = (port) => {
   console.info(
     `===================================\n` +
       `       Ram Usage Analyzer\n` +
       `===================================\n` +
       `\n` +
       `🎉 Successfully started.\n\n` +
-      `Visit: http://${HOST}:${PORT}\n\n`
+      `Visit: http://${HOST}:${port}\n\n`
   );
 };
 
@@ -34,7 +35,7 @@ function parse(input) {
   }
 }
 
-export function boot() {
+export async function boot() {
   const app = express();
 
   setupWS(app);
@@ -83,5 +84,12 @@ export function boot() {
     });
   });
 
-  app.listen(PORT, welcome);
+  try {
+    const port = await getPort({ port: PREFERRED_PORT });
+    app.listen(port, () => welcome(port));
+    return port;
+  } catch (error) {
+    console.error('Failed to start server:', error);
+    throw error;
+  }
 }

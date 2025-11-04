@@ -15,4 +15,7 @@ if (parseInt(majorN) <= 22 && parseInt(minor) < 16) {
   );
 }
 
-boot();
+boot().catch((error) => {
+  console.error('Failed to start the RAM usage analyzer:', error);
+  process.exit(1);
+});

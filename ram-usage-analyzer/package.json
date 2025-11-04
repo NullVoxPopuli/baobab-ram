@@ -25,7 +25,8 @@
   "license": "MIT",
   "dependencies": {
     "express": "^4.18.1",
-    "express-ws": "^5.0.2"
+    "express-ws": "^5.0.2",
+    "get-port": "^7.1.0"
   },
   "engines": {
     "node": ">= 22.16.0"
@@ -33,7 +34,7 @@
   "devDependencies": {
     "@nullvoxpopuli/eslint-configs": "^5.3.4",
     "@types/server": "^1.0.5",
-    "nodemon": "^2.0.19",
+    "nodemon": "^3.1.10",
     "prettier": "^3.6.2"
   }
 }
