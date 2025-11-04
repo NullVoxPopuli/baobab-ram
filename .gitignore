@@ -4,3 +4,4 @@ dist/
 .turbo/
 .eslintcache
 .tsconfig.tsbuildinfo
+.pnpm-store/

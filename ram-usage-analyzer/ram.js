@@ -75,7 +75,9 @@ async function pidRamUsage() {
    * https://www.kernel.org/doc/Documentation/ABI/testing/procfs-smaps_rollup
    */
 
-  let allPids = await fs.readdir('/proc');
+  const proc = process.env.PROC_PATH || '/proc';
+
+  let allPids = await fs.readdir(proc);
 
   allPids = allPids.map((pid) => parseInt(pid, 10)).filter(Boolean);
 
@@ -85,13 +87,13 @@ async function pidRamUsage() {
   await Promise.allSettled(
     allPids.map(async (pid) => {
       // https://man7.org/linux/man-pages/man5/proc.5.html
-      const statm = await fs.readFile(`/proc/${pid}/statm`);
+      const statm = await fs.readFile(`${proc}/${pid}/statm`);
       const statmFile = statm.toString();
       const [_vm, rss, shared, _text, _lib, _data] = statmFile.split(' ');
-      const comm = await fs.readFile(`/proc/${pid}/comm`);
+      const comm = await fs.readFile(`${proc}/${pid}/comm`);
       const commFile = comm.toString().trim();
 
-      const stat = await fs.readFile(`/proc/${pid}/stat`);
+      const stat = await fs.readFile(`${proc}/${pid}/stat`);
       const statLine = stat.toString();
       const [, rest] = statLine.split(`(${commFile}) `);
       // console.log({ statLine })
