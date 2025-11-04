@@ -1,10 +1,11 @@
 import Component from '@glimmer/component';
 import { assert } from '@ember/debug';
 import { service } from '@ember/service';
+
 import Modifier from 'ember-modifier';
 import { Resource, use } from 'ember-resources';
 
-import { Select, Checkbox, Panel, Form } from './ui';
+import { Checkbox, Form,Panel, Select } from './ui';
 
 import type Settings from 'ui/services/settings';
 
@@ -48,7 +49,7 @@ class FormSettings extends Resource {
 
     switch (key) {
       case 'refreshRate': {
-        let parsed = parseInt(`${value}`, 10);
+        const parsed = parseInt(`${value}`, 10);
 
         return this.updateIfDifferent('refreshRate', parsed);
       }
@@ -73,21 +74,25 @@ export default class SettingsPanel extends Component {
   @use serializer = FormSettings.from(() => {});
 
   handleInput = (event: Event) => {
-    let form = event.currentTarget;
+    const form = event.currentTarget;
+
     assert('event.currentTarget must be a <form> element', form instanceof HTMLFormElement)
-    let formData = new FormData(form);
-    let data = Object.fromEntries(formData.entries());
+
+    const formData = new FormData(form);
+    const data = Object.fromEntries(formData.entries());
 
     /**
       * Need to get all fields manually, because checkboxes don't
       * report their "unchecked" value -- "unchecked" is implicit
       * when FormData omits them entirely.
       */
-    for (let field of form.elements) {
-      let name = field.getAttribute('name');
+    for (const field of form.elements) {
+      const name = field.getAttribute('name');
+
       if (!name) continue;
 
-      let value = data[name];
+      const value = data[name];
+
       this.serializer.update(name, value);
     }
   }
@@ -96,10 +101,10 @@ export default class SettingsPanel extends Component {
     <Panel>
       <Form @onInput={{this.handleInput}} class="grid gap-2" {{valuesFromStorage}}>
         <Select @name="refreshRate">
-          <option value=1>1 s</option>
-          <option value=2>2 s</option>
-          <option value=5>5 s</option>
-          <option value=10>10 s</option>
+          <option value="1">1 s</option>
+          <option value="2">2 s</option>
+          <option value="5">5 s</option>
+          <option value="10">10 s</option>
         </Select>
 
         {{! Convert to switch }}
@@ -121,32 +126,35 @@ class ValuesFromStorage extends Modifier {
   @service declare settings: Settings;
 
   modify(form: HTMLFormElement) {
-    for (let element of form.elements) {
-      let name = element.getAttribute('name');
+    for (const element of form.elements) {
+      const name = element.getAttribute('name');
 
       if (!name) continue;
 
-      let value = this.settings[name as keyof Settings];
+      const value = this.settings[name as keyof Settings];
 
       if (element instanceof HTMLSelectElement) {
-        let options = element.querySelectorAll('option');
+        const options = element.querySelectorAll('option');
 
-        for (let option of options) {
+        for (const option of options) {
           if (option.getAttribute('value') === `${value}`) {
             option.setAttribute('selected', 'true');
+
             break;
           }
         }
       } else if (element instanceof HTMLInputElement){
-        let type = element.getAttribute('type');
+        const type = element.getAttribute('type');
 
         switch (type) {
           case 'checkbox': {
             if (value) {
               element.checked = Boolean(value);
             }
+
             break;
           }
+
           default: {
             element.value = `${value}`;
           }

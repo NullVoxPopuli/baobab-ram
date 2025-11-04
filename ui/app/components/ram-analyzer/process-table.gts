@@ -1,7 +1,7 @@
-import { type SunburstData } from './info';
-import { Panel } from '../ui';
 import { type TOC } from '@ember/component/template-only';
 
+import { Panel } from '../ui';
+import { type SunburstData } from './info';
 import { getSize } from './util';
 
 const ROOT_CACHE = new WeakMap<SunburstData, Map<number, number>>();
@@ -18,7 +18,8 @@ function totalRSS(node: SunburstData, root = node): number {
     ROOT_CACHE.set(root, new Map());
   }
 
-  let existing = cache.get(node.pid);
+  const existing = cache.get(node.pid);
+
   if (existing) {
     return existing;
   }
@@ -28,7 +29,8 @@ function totalRSS(node: SunburstData, root = node): number {
 
   value += sum(node.children?.map((child) => totalRSS(child, root)));
 
-  let result = value + node.memory;
+  const result = value + node.memory;
+
   cache.set(node.pid, result);
 
   return result;

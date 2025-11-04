@@ -1,12 +1,13 @@
-import { DefaultTooltip, tooltipFor } from './tooltips';
-import velcro from 'ember-velcro/modifiers/velcro';
-import load from 'ember-async-data/helpers/load';
 import { on } from '@ember/modifier';
 
+import load from 'ember-async-data/helpers/load';
+import velcro from 'ember-velcro/modifiers/velcro';
 import { Panel } from 'ui/components/ui';
 
-import type { TOC } from '@ember/component/template-only';
+import { DefaultTooltip, tooltipFor } from './tooltips';
+
 import type { ProcessInfo } from './info';
+import type { TOC } from '@ember/component/template-only';
 
 const idFor = (process: ProcessInfo) => `text#pid-${process.pid}`;
 

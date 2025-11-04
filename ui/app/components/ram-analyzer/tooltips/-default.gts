@@ -1,7 +1,7 @@
 import { getSize } from '../util';
 
-import type { TOC } from '@ember/component/template-only';
 import type { ProcessInfo } from '../info';
+import type { TOC } from '@ember/component/template-only';
 
 
 export const DefaultTooltip: TOC<{

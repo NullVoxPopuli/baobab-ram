@@ -1,24 +1,26 @@
 import Component from '@glimmer/component';
-import { assert } from '@ember/debug';
 import { cached, tracked } from '@glimmer/tracking';
-import Modifier from 'ember-modifier';
-import { use } from 'ember-resources';
+import { assert } from '@ember/debug';
 
 import * as d3 from 'd3';
-
+import Modifier from 'ember-modifier';
+import { use } from 'ember-resources';
 import { service } from 'ui/helpers/service';
 
 import { autosize } from './autosize';
-import {
-  Scale, Dimensions,
-  scopedTo, partition, getSize, arcVisible, labelVisible,
-  processForPid,
-  MAX_VISIBLE_DEPTH, NULL_PID
-} from './util';
+import type {Info} from './info';
+import {type ProcessInfo,type SunburstData } from './info';
 import { ProcessTable } from './process-table';
 import { Tooltip } from './tooltip';
-import { Info, type SunburstData, type ProcessInfo } from './info';
 import { type HierarchyNode } from './types';
+import {
+arcVisible, Dimensions,
+getSize, labelVisible,
+  MAX_VISIBLE_DEPTH, NULL_PID,
+partition,   processForPid,
+  Scale,   scopedTo} from './util';
+
+
 
 export class Sunburst extends Component<{
   Args: {
@@ -51,7 +53,8 @@ export class Sunburst extends Component<{
     if (this.blurFrame) cancelAnimationFrame(this.blurFrame);
     if (this.blurTimeout) clearTimeout(this.blurTimeout);
 
-    let process = processForPid(pid, this.data);
+    const process = processForPid(pid, this.data);
+
     this.hoveredProcess = process;
   }
   blurFrame?: number;
@@ -60,7 +63,8 @@ export class Sunburst extends Component<{
     if (this.blurFrame) cancelAnimationFrame(this.blurFrame);
     if (this.blurTimeout) clearTimeout(this.blurTimeout);
 
-    let delay = 200; //ms
+    const delay = 200; //ms
+
     this.blurTimeout = setTimeout(() => {
       this.blurFrame = requestAnimationFrame(async () => {
         this.hoveredProcess = undefined;
@@ -220,7 +224,7 @@ class Sun extends Modifier<Signature> {
   }
 
   update = () => {
-    let firstDescendant = this.root.descendants().slice(1);
+    const firstDescendant = this.root.descendants().slice(1);
 
     if (!this.selections.pathG) return;
     if (!this.selections.labelG) return;
@@ -286,18 +290,20 @@ class Sun extends Modifier<Signature> {
   }
 
   setup() {
-    let { width, radius } = this.dimensions;
+    const { width, radius } = this.dimensions;
 
-    let root = partition(this.data) as HierarchyNode;
+    const root = partition(this.data) as HierarchyNode;
+
     root.each(d => d.current = d);
     this.root = root;
-    let translate = `translate(${width},${width / 2})`;
 
-    let svg = d3.select(this.container)
+    const translate = `translate(${width},${width / 2})`;
+
+    const svg = d3.select(this.container)
       .style("font", "12px sans-serif")
       .attr('preserveAspectRatio', 'xMinYMid');
 
-    let zoom = d3.zoom()
+    const zoom = d3.zoom()
       .scaleExtent([0, 6])
       .on("zoom", (event) => {
         const { transform } = event;
@@ -345,7 +351,8 @@ class Sun extends Modifier<Signature> {
   }
 
   clicked = (_event: Event, p: HierarchyNode) => {
-    let backNode = p.parent || this.root;
+    const backNode = p.parent || this.root;
+
     this.parent.datum(backNode);
 
     this.updateRoot(p.data.pid);
@@ -377,7 +384,7 @@ class Sun extends Modifier<Signature> {
       .filter(function (d) {
         assert('path member isnt an SVGPathElement', this instanceof SVGPathElement);
 
-        let opacity = this.getAttribute('fill-opacity');
+        const opacity = this.getAttribute('fill-opacity');
 
         if (!opacity) return arcVisible(d.target);
 
@@ -386,7 +393,7 @@ class Sun extends Modifier<Signature> {
       .attr("fill-opacity", d => arcVisible(d.target) ? (d.depth / MAX_VISIBLE_DEPTH) : 0)
       .attr("pointer-events", d => arcVisible(d.target) ? "auto" : "none")
       .attrTween("d", d => () => {
-        let arcPath = this.dimensions.arc(d.current)
+        const arcPath = this.dimensions.arc(d.current)
 
         // bug in d3 where arc returns potentially null?
         // maybe a math thing I don't understand that could end up with null?
@@ -402,7 +409,7 @@ class Sun extends Modifier<Signature> {
       .filter(function (d) {
         assert('label member isnt an SVGTextElement', this instanceof SVGTextElement);
 
-        let opacity = this.getAttribute('fill-opacity');
+        const opacity = this.getAttribute('fill-opacity');
 
         if (!opacity) return labelVisible(d.target);
 

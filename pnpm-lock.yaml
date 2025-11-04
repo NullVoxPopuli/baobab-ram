@@ -55,6 +55,9 @@ importers:
       nodemon:
         specifier: ^2.0.19
         version: 2.0.22
+      prettier:
+        specifier: ^3.6.2
+        version: 3.6.2
 
   ui:
     dependencies:

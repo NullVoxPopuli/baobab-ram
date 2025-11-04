@@ -1,4 +1,5 @@
 'use strict';;
+
 const path = require('path');
 const EmberApp = require('ember-cli/lib/broccoli/ember-app');
 const stew = require('broccoli-stew');
@@ -17,7 +18,7 @@ module.exports = async function(defaults) {
     buildOnce
   } = await import("@embroider/vite");
 
-  let app = new EmberApp(defaults, {
+  const app = new EmberApp(defaults, {
     // Add options here
   });
 

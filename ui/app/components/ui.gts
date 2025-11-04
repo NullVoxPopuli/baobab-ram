@@ -1,9 +1,9 @@
 // @ts-ignore
-import { on } from '@ember/modifier';
+import { type TOC } from '@ember/component/template-only';
 // @ts-ignore
 import { fn } from '@ember/helper';
+import { on } from '@ember/modifier';
 import { underscore } from '@ember/string';
-import { type TOC } from '@ember/component/template-only';
 
 const handleSubmit = (handleInput: (event: Event) => void, event: Event) => {
   event.preventDefault();

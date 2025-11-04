@@ -45,7 +45,7 @@ export class Info extends Resource {
 
   @use socket = RAMSocket.from(() => ({
     handleMessage: (event: MessageEvent, ctx: RAMSocket) => {
-      let json = JSON.parse(event.data);
+      const json = JSON.parse(event.data);
 
       if ('totalMemory' in json) {
         this.totalMemory = json.totalMemory;

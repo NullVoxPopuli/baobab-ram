@@ -6,8 +6,10 @@
   "main": "index.js",
   "scripts": {
     "start": "nodemon --ignore ./site-dist/ index.js",
-    "lint": "eslint . --cache",
-    "lint:fix": "eslint . --fix"
+    "lint": "eslint . --cache && pnpm lint:format",
+    "lint:fix": "eslint . --fix && pnpm format",
+    "lint:format": "prettier . --check",
+    "format": "prettier . --write"
   },
   "files": [
     "index.js",
@@ -31,6 +33,7 @@
   "devDependencies": {
     "@nullvoxpopuli/eslint-configs": "^5.3.4",
     "@types/server": "^1.0.5",
-    "nodemon": "^2.0.19"
+    "nodemon": "^2.0.19",
+    "prettier": "^3.6.2"
   }
 }
