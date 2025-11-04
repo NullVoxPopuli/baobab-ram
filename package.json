@@ -7,14 +7,11 @@
     "start": "concurrently 'npm:start:*' --restart-after 5000 --prefix-colors cyan,white,yellow",
     "start:ui": "pnpm --filter 'ui' start --port 0",
     "start:server": "pnpm --filter 'ram-usage-analyzer' start",
-
     "publish": "pnpm clean; pnpm build && cd ./ram-usage-analyzer && npm publish",
     "build": "pnpm --filter 'ui' build",
     "clean": "rm -r ram-usage-analyzer/site-dist/*",
-
     "lint": "pnpm --filter '*' lint",
     "lint:fix": "pnpm --filter '*' lint:fix",
-
     "typecheck": "pnpm --filter 'ui' glint",
     "test": "pnpm --filter '*' test"
   },
@@ -31,13 +28,14 @@
   ],
   "author": "NullVoxPopuli",
   "license": "MIT",
+  "packageManager": "pnpm@10.20.0",
   "pnpm": {
     "overrides": {
       "@types/eslint": "^7.0.0"
     }
   },
   "devDependencies": {
-    "concurrently": "^7.4.0",
-    "turbo": "^1.4.6"
+    "concurrently": "^9.2.1",
+    "turbo": "^2.6.0"
   }
 }

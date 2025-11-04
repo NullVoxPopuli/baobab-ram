@@ -75,7 +75,7 @@
     "babel-eslint": "^10.1.0",
     "babel-plugin-ember-template-compilation": "^2.3.0",
     "broccoli-stew": "^3.0.0",
-    "concurrently": "^7.4.0",
+    "concurrently": "^9.2.1",
     "cssnano": "^5.1.13",
     "d3-scale-chromatic": "^3.0.0",
     "decorator-transforms": "^2.3.0",
