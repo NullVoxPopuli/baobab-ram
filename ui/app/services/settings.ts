@@ -14,7 +14,7 @@ function _stored(target: object, key: string, _descriptor: PropertyDescriptor) {
 
       get(this, `_${key}`);
 
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-member-access
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-return
       return parsed.value;
     },
     set(value: unknown) {

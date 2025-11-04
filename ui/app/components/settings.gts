@@ -7,7 +7,7 @@ import { link } from "reactiveweb/link";
 
 import { Checkbox, Form, Panel, Select } from "./ui";
 
-import type Settings from "ui/services/settings";
+import type Settings from "#services/settings.ts";
 
 /**
  * This could probably be its own service,
@@ -147,7 +147,7 @@ class ValuesFromStorage extends Modifier {
         const options = element.querySelectorAll("option");
 
         for (const option of options) {
-          if (option.getAttribute("value") === `${value}`) {
+          if (option.getAttribute("value") === `${value as string}`) {
             option.setAttribute("selected", "true");
 
             break;
@@ -166,7 +166,7 @@ class ValuesFromStorage extends Modifier {
           }
 
           default: {
-            element.value = `${value}`;
+            element.value = `${value as string}`;
           }
         }
       }

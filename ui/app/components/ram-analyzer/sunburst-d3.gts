@@ -4,12 +4,10 @@ import { assert } from "@ember/debug";
 
 import * as d3 from "d3";
 import Modifier from "ember-modifier";
-import { use } from "ember-resources";
 import { service } from "ember-primitives/helpers/service";
+import { use } from "ember-resources";
 
 import { autosize } from "./autosize";
-import type { Info } from "./info";
-import { type ProcessInfo, type SunburstData } from "./info";
 import { ProcessTable } from "./process-table";
 import { Tooltip } from "./tooltip";
 import { type HierarchyNode } from "./types";
@@ -25,6 +23,8 @@ import {
   Scale,
   scopedTo,
 } from "./util";
+
+import type { Info, ProcessInfo, SunburstData } from "./info.gts";
 
 export class Sunburst extends Component<{
   Args: {
@@ -70,7 +70,7 @@ export class Sunburst extends Component<{
     const delay = 200; //ms
 
     this.blurTimeout = setTimeout(() => {
-      this.blurFrame = requestAnimationFrame(async () => {
+      this.blurFrame = requestAnimationFrame(() => {
         this.hoveredProcess = undefined;
         this.blurFrame = undefined;
         this.blurTimeout = undefined;
