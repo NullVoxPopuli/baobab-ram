@@ -85,9 +85,6 @@ importers:
       ember-resources:
         specifier: ^5.4.0
         version: 5.6.4(@ember/test-waiters@3.1.0)(@glimmer/component@1.1.2(@babel/core@7.28.5))(@glimmer/tracking@1.1.2)(@glint/template@0.9.7(@glimmer/component@1.1.2(@babel/core@7.28.5)))(ember-source@4.7.1(@babel/core@7.28.5)(@glint/template@0.9.7(@glimmer/component@1.1.2(@babel/core@7.28.5)))(webpack@5.102.1))
-      ember-tracked-storage-polyfill:
-        specifier: ^1.0.0
-        version: 1.0.0
       ember-velcro:
         specifier: ^1.0.0
         version: 1.1.0(@babel/core@7.28.5)(@glint/environment-ember-loose@0.9.7(@glimmer/component@1.1.2(@babel/core@7.28.5))(ember-cli-htmlbars@6.3.0)(ember-modifier@3.2.7(@babel/core@7.28.5)))(@glint/template@0.9.7(@glimmer/component@1.1.2(@babel/core@7.28.5)))(ember-source@4.7.1(@babel/core@7.28.5)(@glint/template@0.9.7(@glimmer/component@1.1.2(@babel/core@7.28.5)))(webpack@5.102.1))
@@ -197,9 +194,6 @@ importers:
       '@types/ember__object':
         specifier: ^4.0.4
         version: 4.0.12(@babel/core@7.28.5)
-      '@types/ember__polyfills':
-        specifier: ^4.0.0
-        version: 4.0.6
       '@types/ember__routing':
         specifier: ^4.0.10
         version: 4.0.23(@babel/core@7.28.5)
@@ -254,9 +248,6 @@ importers:
       ember-auto-import:
         specifier: ^2.4.2
         version: 2.11.1(@glint/template@0.9.7(@glimmer/component@1.1.2(@babel/core@7.28.5)))(webpack@5.102.1)
-      ember-cached-decorator-polyfill:
-        specifier: ^0.1.4
-        version: 0.1.4(@babel/core@7.28.5)
       ember-cli:
         specifier: ~6.8.0
         version: 6.8.0(@types/node@24.10.0)(babel-core@6.26.3)(handlebars@4.7.8)(underscore@1.13.7)
@@ -3575,14 +3566,6 @@ packages:
   ember-auto-import@2.11.1:
     resolution: {integrity: sha512-teiDrL6J5nUbwQ6AZ29qKRibdkDYrdY8YNXhJNwnnso3mgqZjvWW5TA0W2HdB0gTSz1BcTg9kWJi45zn04b+IA==}
     engines: {node: 12.* || 14.* || >= 16}
-
-  ember-cache-primitive-polyfill@1.0.1:
-    resolution: {integrity: sha512-hSPcvIKarA8wad2/b6jDd/eU+OtKmi6uP+iYQbzi5TQpjsqV6b4QdRqrLk7ClSRRKBAtdTuutx+m+X+WlEd2lw==}
-    engines: {node: 10.* || >= 12}
-
-  ember-cached-decorator-polyfill@0.1.4:
-    resolution: {integrity: sha512-JOK7kBCWsTVCzmCefK4nr9BACDJk0owt9oIUaVt6Q0UtQ4XeAHmoK5kQ/YtDcxQF1ZevHQFdGhsTR3JLaHNJgA==}
-    engines: {node: 10.* || >= 12}
 
   ember-cli-app-version@5.0.0:
     resolution: {integrity: sha512-afhx/CXDOMNXzoe4NDPy5WUfxWmYYHUzMCiTyvPBxCDBXYcMrtxNWxvgaSaeqcoHVEmqzeyBj8V82tzmT1dcyw==}
@@ -12518,26 +12501,6 @@ snapshots:
       - '@glint/template'
       - supports-color
       - webpack
-
-  ember-cache-primitive-polyfill@1.0.1(@babel/core@7.28.5):
-    dependencies:
-      ember-cli-babel: 7.26.11
-      ember-cli-version-checker: 5.1.2
-      ember-compatibility-helpers: 1.2.7(@babel/core@7.28.5)
-      silent-error: 1.1.1
-    transitivePeerDependencies:
-      - '@babel/core'
-      - supports-color
-
-  ember-cached-decorator-polyfill@0.1.4(@babel/core@7.28.5):
-    dependencies:
-      '@glimmer/tracking': 1.1.2
-      ember-cache-primitive-polyfill: 1.0.1(@babel/core@7.28.5)
-      ember-cli-babel: 7.26.11
-      ember-cli-babel-plugin-helpers: 1.1.1
-    transitivePeerDependencies:
-      - '@babel/core'
-      - supports-color
 
   ember-cli-app-version@5.0.0:
     dependencies:
