@@ -154,6 +154,9 @@ export class Sunburst extends Component<{
           free=(getSize @data.freeMemory)
           allocated=(getSize @data.allocatedMemory)
           total=(getSize @data.totalMemory)
+          totalMemory=(getSize @data.root.totalMemory)
+          totalRss=(getSize @data.root.totalRss)
+          totalShared=(getSize @data.root.totalShared)
           updateRoot=this.updateRoot
           onHover=this.handleHover
           onBlur=this.handleBlur
@@ -218,6 +221,9 @@ interface Signature {
       free: string;
       allocated: string;
       total: string;
+      totalMemory: string;
+      totalRss: string;
+      totalShared: string;
       updateRoot: (newPid: number) => void;
       onHover: (pid: number) => void;
       onBlur: (pid: number) => void;
@@ -303,6 +309,7 @@ class Sun extends Modifier<Signature> {
     this.selections.freeMemory?.text(`${named.free} Free`);
     this.selections.allocatedMemory?.text(`${named.allocated} Allocated`);
     this.selections.totalMemory?.text(`${named.total} Total`);
+    this.selections.appMemory?.text(`${named.totalMemory} App Memory`);
   }
 
   processDataUpdate() {
@@ -544,6 +551,9 @@ class Sun extends Modifier<Signature> {
     this.selections.totalMemory = this.selections.stats
       .append("text")
       .attr("dy", "1.2em");
+    this.selections.appMemory = this.selections.stats
+      .append("text")
+      .attr("dy", "2.4em");
   }
 
   findNodeByPid(root: HierarchyNode, targetPid: number): HierarchyNode | null {

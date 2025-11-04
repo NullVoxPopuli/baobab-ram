@@ -47,6 +47,10 @@ export class Info extends Component<{
     return this.totalMemory - this.freeMemory;
   }
 
+  get root() {
+    return this.json;
+  }
+
   get isLoading() {
     return Object.keys(this.json || {}).length === 0;
   }

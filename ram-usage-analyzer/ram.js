@@ -136,15 +136,23 @@ async function pidRamUsage() {
       return {
         ...pidStats,
         value: pidStats.memory,
+        totalMemory: pidStats.memory,
+        totalRss: pidStats.rss,
+        totalShared: pidStats.shared,
       };
     }
+
+    const childrenWithChildren = children.map((child) => {
+      return childrenFor(child);
+    });
 
     return {
       ...pidStats,
       value: pidStats.memory,
-      children: children.map((child) => {
-        return childrenFor(child);
-      }),
+      totalMemory: childrenWithChildren.reduce((total, childWithChildren) => total + childWithChildren.totalMemory, pidStats.memory),
+      totalRss: childrenWithChildren.reduce((total, childWithChildren) => total + childWithChildren.totalRss, pidStats.rss),
+      totalShared: childrenWithChildren.reduce((total, childWithChildren) => total + childWithChildren.totalShared, pidStats.shared),
+      children: childrenWithChildren,
     };
   };
 
