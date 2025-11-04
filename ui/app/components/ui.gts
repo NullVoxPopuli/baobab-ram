@@ -1,9 +1,7 @@
-// @ts-ignore
-import { on } from '@ember/modifier';
-// @ts-ignore
-import { fn } from '@ember/helper';
-import { underscore } from '@ember/string';
-import { type TOC } from '@ember/component/template-only';
+import { type TOC } from "@ember/component/template-only";
+import { fn } from "@ember/helper";
+import { on } from "@ember/modifier";
+import { underscore } from "@ember/string";
 
 const handleSubmit = (handleInput: (event: Event) => void, event: Event) => {
   event.preventDefault();
@@ -12,12 +10,12 @@ const handleSubmit = (handleInput: (event: Event) => void, event: Event) => {
 
 export const Form: TOC<{
   Element: HTMLFormElement;
-  Args: { onInput: (event: Event) => void }
-  Blocks: { default: [] }
+  Args: { onInput: (event: Event) => void };
+  Blocks: { default: [] };
 }> = <template>
   <form
-    {{on 'submit' (fn handleSubmit @onInput)}}
-    {{on 'input' @onInput}}
+    {{on "submit" (fn handleSubmit @onInput)}}
+    {{on "input" @onInput}}
     ...attributes
   >
     {{yield}}
@@ -26,19 +24,22 @@ export const Form: TOC<{
 
 export const Panel: TOC<{
   Element: HTMLDivElement;
-  Blocks: { default: [] }
+  Blocks: { default: [] };
 }> = <template>
-  <div class="drop-shadow shadow p-4 backdrop-blur rounded bg-white/70" ...attributes>
+  <div
+    class="drop-shadow shadow p-4 backdrop-blur rounded bg-white/70"
+    ...attributes
+  >
     {{yield}}
   </div>
 </template>;
 
-const toWords = (a: string) => underscore(a).replace('_', ' ');
-const or = (a: string | undefined, b: string | undefined) => a || b || '';
+const toWords = (a: string) => underscore(a).replace("_", " ");
+const or = (a: string | undefined, b: string | undefined) => a || b || "";
 
 export const Checkbox: TOC<{
   Element: HTMLInputElement;
-  Args: { label?: string; name: string }
+  Args: { label?: string; name: string };
 }> = <template>
   <label>
     {{toWords (or @label @name)}}
@@ -48,20 +49,13 @@ export const Checkbox: TOC<{
 
 export const Select: TOC<{
   Element: HTMLSelectElement;
-  Args: { label?: string; name: string }
-  Blocks: { default: [] }
+  Args: { label?: string; name: string };
+  Blocks: { default: [] };
 }> = <template>
-  <label class="items-center grid grid-flow-col grid-cols-2 gap-1" >
+  <label class="items-center grid grid-flow-col grid-cols-2 gap-1">
     <span>{{toWords (or @label @name)}}</span>
     <select
-      class="
-        form-select appearance-none
-        w-full
-        px-2 py-0 m-0
-        bg-white bg-clip-padding bg-no-repeat
-        border border-solid border-gray-300
-        rounded
-      "
+      class="form-select appearance-none w-full px-2 py-0 m-0 bg-white bg-clip-padding bg-no-repeat border border-solid border-gray-300 rounded"
       name={{@name}}
       ...attributes
     >
@@ -69,4 +63,3 @@ export const Select: TOC<{
     </select>
   </label>
 </template>;
-

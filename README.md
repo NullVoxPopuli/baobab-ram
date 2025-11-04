@@ -23,7 +23,7 @@ This tool is inspired by this [AskUbuntu Question][ask-ubuntu-inspiration].
 
 **Requirements**
 
-- Node 16+
+- Node 22.16+
 - A web browser
 
 
@@ -48,4 +48,4 @@ npx ram-usage-analyzer --open
 
 ## Contributing
 
-wip
+Just open a PR or Issue -- all are welcome <3

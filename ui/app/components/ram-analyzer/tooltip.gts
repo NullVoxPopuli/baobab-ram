@@ -1,12 +1,14 @@
-import { DefaultTooltip, tooltipFor } from './tooltips';
-import velcro from 'ember-velcro/modifiers/velcro';
-import load from 'ember-async-data/helpers/load';
-import { on } from '@ember/modifier';
+import { on } from "@ember/modifier";
 
-import { Panel } from 'ui/components/ui';
+import { anchorTo } from "ember-primitives/floating-ui";
+import { getPromiseState } from "reactiveweb/get-promise-state";
 
-import type { TOC } from '@ember/component/template-only';
-import type { ProcessInfo } from './info';
+import { Panel } from "#ui";
+
+import { DefaultTooltip, tooltipFor } from "./tooltips";
+
+import type { ProcessInfo } from "./info";
+import type { TOC } from "@ember/component/template-only";
 
 const idFor = (process: ProcessInfo) => `text#pid-${process.pid}`;
 
@@ -15,44 +17,39 @@ export const Tooltip: TOC<{
   Args: {
     process?: ProcessInfo;
     onEnter?: () => void;
-  }
-}> =
-  <template>
-    {{#if @process}}
-      <Panel
-        ...attributes
-        class="grid gap-2 shadow-2xl"
-        {{velcro (idFor @process)}}
-      >
+  };
+}> = <template>
+  {{#if @process}}
+    <Panel
+      ...attributes
+      class="grid gap-2 shadow-2xl"
+      {{anchorTo (idFor @process)}}
+    >
 
-
-        {{! Types are incorrect for load }}
+      {{#let (getPromiseState (tooltipFor @process.name)) as |state|}}
 
         {{! @glint-ignore }}
-        {{#let (load (tooltipFor @process.name)) as |state|}}
-
+        {{#if state.isResolved}}
           {{! @glint-ignore }}
-          {{#if state.isResolved}}
+          {{#if state.value}}
+
             {{! @glint-ignore }}
-            {{#if state.value}}
-
-              {{! @glint-ignore }}
-              <state.value />
-              <hr class="border-0.5 border-indigo-500/50" />
-
-            {{/if}}
+            <state.value />
+            <hr class="border-0.5 border-indigo-500/50" />
 
           {{/if}}
 
-        {{/let}}
+        {{/if}}
 
-        <DefaultTooltip @process={{@process}} />
-      </Panel>
-    {{/if}}
-  </template>;
-        // <button {{on 'click' @onEnter}}>
-        //   Focus
-        // </button>
-        // <button {{on 'click' @onEnter}}>
-        //   Up
-        // </button>
+      {{/let}}
+
+      <DefaultTooltip @process={{@process}} />
+    </Panel>
+  {{/if}}
+</template>;
+// <button {{on 'click' @onEnter}}>
+//   Focus
+// </button>
+// <button {{on 'click' @onEnter}}>
+//   Up
+// </button>

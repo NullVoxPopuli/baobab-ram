@@ -25,7 +25,7 @@ class Autosize extends Modifier<Signature> {
       element instanceof SVGElement
     );
 
-    let [updateSize] = positional;
+    const [updateSize] = positional;
 
     this.parentElement = element.parentElement;
 
@@ -64,15 +64,15 @@ class Autosize extends Modifier<Signature> {
 
     if (!this.parentElement) return;
 
-    let rect = this.parentElement.getBoundingClientRect();
-    let parentStyles = getComputedStyle(this.parentElement);
+    const rect = this.parentElement.getBoundingClientRect();
+    const parentStyles = getComputedStyle(this.parentElement);
 
-    let xPadding = parseFloat(parentStyles.paddingLeft) + parseFloat(parentStyles.paddingRight);
-    let yPadding = parseFloat(parentStyles.paddingTop) + parseFloat(parentStyles.paddingBottom);
+    const xPadding = parseFloat(parentStyles.paddingLeft) + parseFloat(parentStyles.paddingRight);
+    const yPadding = parseFloat(parentStyles.paddingTop) + parseFloat(parentStyles.paddingBottom);
 
-    let { width, height } = rect;
+    const { width, height } = rect;
 
-    let smaller = Math.min(width - xPadding, height - yPadding);
+    const smaller = Math.min(width - xPadding, height - yPadding);
 
     this.updateSize(smaller);
   };
@@ -80,7 +80,7 @@ class Autosize extends Modifier<Signature> {
 
 function viewBoxFor(element: Element) {
   // but let's put 0,0 in the middle
-  let { x, y, width, height } = element.getBoundingClientRect();
+  const { x, y, width, height } = element.getBoundingClientRect();
 
   return `${x},${y},${width},${height}`;
 }

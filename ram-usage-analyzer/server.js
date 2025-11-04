@@ -1,6 +1,6 @@
 import * as os from 'node:os';
-import * as url from 'node:url';
 import * as path from 'node:path';
+import * as url from 'node:url';
 
 import express from 'express';
 import setupWS from 'express-ws';
@@ -53,19 +53,19 @@ export function boot() {
      *   | { type: 'processes' }
      */
     ws.on('message', async (msg) => {
-      let json = parse(msg);
+      const json = parse(msg);
 
       switch (json.type) {
         case 'total': {
-          let totalMemory = os.totalmem();
-          let freeMemory = os.freemem();
+          const totalMemory = os.totalmem();
+          const freeMemory = os.freemem();
 
           ws.send(JSON.stringify({ totalMemory, freeMemory }));
 
           break;
         }
         case 'processes': {
-          let data = await collectRAMUsage();
+          const data = await collectRAMUsage();
 
           ws.send(JSON.stringify({ processes: data }));
 

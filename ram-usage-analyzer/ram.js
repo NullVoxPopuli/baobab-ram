@@ -1,6 +1,6 @@
-import * as util from 'node:util';
-import fs from 'node:fs/promises';
 import { exec } from 'node:child_process';
+import fs from 'node:fs/promises';
+import * as util from 'node:util';
 
 // likely 4096 aka 4KB
 let pageSize;
@@ -26,9 +26,9 @@ async function getPageSize() {
         return reject(err);
       }
 
-      let output = stdout.toString().trim();
+      const output = stdout.toString().trim();
 
-      let _pageSize = parseInt(output, 10);
+      const _pageSize = parseInt(output, 10);
 
       pageSize = _pageSize;
 
@@ -79,24 +79,24 @@ async function pidRamUsage() {
 
   allPids = allPids.map((pid) => parseInt(pid, 10)).filter(Boolean);
 
-  let stats = new Map();
-  let childrenOf = new Map();
+  const stats = new Map();
+  const childrenOf = new Map();
 
   await Promise.allSettled(
     allPids.map(async (pid) => {
       // https://man7.org/linux/man-pages/man5/proc.5.html
-      let statm = await fs.readFile(`/proc/${pid}/statm`);
-      let statmFile = statm.toString();
-      let [_vm, rss, shared, _text, _lib, _data] = statmFile.split(' ');
-      let comm = await fs.readFile(`/proc/${pid}/comm`);
-      let commFile = comm.toString().trim();
+      const statm = await fs.readFile(`/proc/${pid}/statm`);
+      const statmFile = statm.toString();
+      const [_vm, rss, shared, _text, _lib, _data] = statmFile.split(' ');
+      const comm = await fs.readFile(`/proc/${pid}/comm`);
+      const commFile = comm.toString().trim();
 
-      let stat = await fs.readFile(`/proc/${pid}/stat`);
-      let statLine = stat.toString();
-      let [, rest] = statLine.split(`(${commFile}) `);
+      const stat = await fs.readFile(`/proc/${pid}/stat`);
+      const statLine = stat.toString();
+      const [, rest] = statLine.split(`(${commFile}) `);
       // console.log({ statLine })
-      let parts = rest.split(' ');
-      let ppid = parseInt(parts[1], 10);
+      const parts = rest.split(' ');
+      const ppid = parseInt(parts[1], 10);
       // let vss = parts[20];
       // let rss = parts[21];
 
@@ -123,7 +123,7 @@ async function pidRamUsage() {
   );
 
   const childrenFor = (pidStats) => {
-    let children = (childrenOf.get(pidStats.pid) || [])
+    const children = (childrenOf.get(pidStats.pid) || [])
       .map((childPid) => stats.get(childPid))
       .filter(Boolean);
 
@@ -148,8 +148,8 @@ async function pidRamUsage() {
    * Now that we have all the stats, we need to form these into tree...
    * which... it would be great if pidtree provided this
    */
-  let rootStat = stats.get(1);
-  let root = childrenFor(rootStat);
+  const rootStat = stats.get(1);
+  const root = childrenFor(rootStat);
 
   // console.log(util.inspect(root, false, 5, true));
 

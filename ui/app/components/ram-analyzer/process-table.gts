@@ -1,13 +1,14 @@
-import { type SunburstData } from './info';
-import { Panel } from '../ui';
-import { type TOC } from '@ember/component/template-only';
+import { type TOC } from "@ember/component/template-only";
 
-import { getSize } from './util';
+import { Panel } from "../ui";
+import { getSize } from "./util";
+
+import type { SunburstData } from "./info.gts";
 
 const ROOT_CACHE = new WeakMap<SunburstData, Map<number, number>>();
 
 function sum(nums?: number[]) {
-  return ( nums || []).reduce((total, current) => total + current, 0);
+  return (nums || []).reduce((total, current) => total + current, 0);
 }
 
 function totalRSS(node: SunburstData, root = node): number {
@@ -18,17 +19,18 @@ function totalRSS(node: SunburstData, root = node): number {
     ROOT_CACHE.set(root, new Map());
   }
 
-  let existing = cache.get(node.pid);
+  const existing = cache.get(node.pid);
+
   if (existing) {
     return existing;
   }
-
 
   let value = 0;
 
   value += sum(node.children?.map((child) => totalRSS(child, root)));
 
-  let result = value + node.memory;
+  const result = value + node.memory;
+
   cache.set(node.pid, result);
 
   return result;
@@ -37,9 +39,9 @@ function totalRSS(node: SunburstData, root = node): number {
 export const ProcessTable: TOC<{
   Args: {
     data: SunburstData;
-  }
+  };
 }> = <template>
-  <Panel class='h-full fixed right-0 top-0 bottom-0 bg-white/70'>
+  <Panel class="h-full fixed right-0 top-0 bottom-0 bg-white/70">
     <table class="table-auto">
       <thead>
         <tr>
@@ -61,8 +63,8 @@ const Row: TOC<{
   Args: {
     Named: {
       data: SunburstData;
-    }
-  }
+    };
+  };
 }> = <template>
   <tr>
     <td>{{@data.pid}}</td>

@@ -1,14 +1,14 @@
-import { Info } from './info';
-import { Sunburst } from './sunburst-d3';
+import { Info } from "./info.gts";
+import { Sunburst } from "./sunburst-d3";
 
-<template>
-  {{#let (Info) as |data|}}
-    {{#if data.isLoading}}
+export const RamAnalyzer = <template>
+  <Info as |state|>
+    {{#if state.isLoading}}
       Loading
-    {{else if data.hasResults}}
-      <Sunburst @data={{data}} />
+    {{else if state.hasResults}}
+      <Sunburst @data={{state}} />
     {{else}}
       Unknown error occurred
     {{/if}}
-  {{/let}}
-</template>
+  </Info>
+</template>;
