@@ -8,7 +8,7 @@
   "license": "MIT",
   "author": "NullVoxPopuli",
   "scripts": {
-    "build": "vite build",
+    "build:production": "vite build",
     "lint": "concurrently 'npm:lint:*(!fix)' --names 'lint:' --prefix-colors cyan,white,yellow",
     "lint:fix": "concurrently 'npm:lint:*:fix' --names 'fix:' --prefix-colors cyan,white,yellow && pnpm format",
     "lint:hbs": "ember-template-lint . --no-error-on-unmatched-pattern",
