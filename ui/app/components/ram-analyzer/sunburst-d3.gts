@@ -1,47 +1,142 @@
 import Component from '@glimmer/component';
 import { assert } from '@ember/debug';
-import { tracked } from '@glimmer/tracking';
+import { cached, tracked } from '@glimmer/tracking';
 import Modifier from 'ember-modifier';
 import { use } from 'ember-resources';
 
 import * as d3 from 'd3';
-import * as filesize  from 'filesize';
+
+import { service } from 'ui/helpers/service';
 
 import { autosize } from './autosize';
-import { Scale, Dimensions, partition, arcVisible, labelVisible, MAX_VISIBLE_DEPTH } from './util';
-import { Info, type SunburstData } from './info';
-import { type HierarchyNode, type Data } from './types';
-
-const getSize = filesize.partial({ base: 2, standard: "jedec" });
+import {
+  Scale, Dimensions,
+  scopedTo, partition, getSize, arcVisible, labelVisible,
+  processForPid,
+  MAX_VISIBLE_DEPTH, NULL_PID
+} from './util';
+import { ProcessTable } from './process-table';
+import { Tooltip } from './tooltip';
+import { Info, type SunburstData, type ProcessInfo } from './info';
+import { type HierarchyNode } from './types';
 
 export class Sunburst extends Component<{
   Args: {
     data: Info;
   }
 }> {
+  /**
+    * Size of the chart / svg
+    * This is arbitrary, as we need the chart to start with something.
+    * After DOM measurements are taken, this will be updated by the
+    * {{autosize}} modifier
+    */
   @tracked size = 700;
-
   updateSize = (size: number) => this.size = size;
 
+  /**
+    * The current root process PID
+    * In this current implementatino, d3 manages this, but will report changes
+    * to it here.
+    *
+    * This allows us to filter the process table down to what's visible in the graph.
+    *
+    * TODO: make this the source of truth, not d3.
+    */
+  @tracked currentRoot = 1;
+  updateRoot = (newPid: number) => this.currentRoot = newPid;
+
+  @tracked hoveredProcess?: ProcessInfo;
+  handleHover = (pid: number) => {
+    if (this.blurFrame) cancelAnimationFrame(this.blurFrame);
+    if (this.blurTimeout) clearTimeout(this.blurTimeout);
+
+    let process = processForPid(pid, this.data);
+    this.hoveredProcess = process;
+  }
+  blurFrame?: number;
+  blurTimeout?: number;
+  handleBlur = (pid: number) => {
+    if (this.blurFrame) cancelAnimationFrame(this.blurFrame);
+    if (this.blurTimeout) clearTimeout(this.blurTimeout);
+
+    let delay = 200; //ms
+    this.blurTimeout = setTimeout(() => {
+      this.blurFrame = requestAnimationFrame(async () => {
+        this.hoveredProcess = undefined;
+        this.blurFrame = undefined;
+        this.blurTimeout = undefined;
+      });
+    }, delay)
+  }
+
   get data() {
-    return this.args.data.json || { name: '<missing-data>', pid: '0', children: [] };
+    return this.args.data.json || NULL_PID;
+  }
+
+  @cached
+  get scopedData() {
+    return scopedTo(this.data, this.currentRoot);
   }
 
   /**
     * None if this is really ergonomic enough to be used individually as public API.
     * in particular, the way this.size is updated.
+    *
+    * Also, all reactivity about the chart is deferred to d3.
+    * This could cause performance problems down the line on low-powered devices.
+    *
+    * TODO: investigate if manually typing out the SVG elements and attributes as
+    *       elements and derived computations is worth the cost of figuring out
+    *       how to do that.
+    *
+    *       The main downside to using the template as the reactive interface is that
+    *       all d3 demos don't care about a consuming UI framework.
+    *
+    *       The problem is that d3 has its own reactivity, and has to diff our
+    *       whole object every time we want to change anything, no matter how
+    *       significant of a change it is.
+    *       Right now, we hack a bunch of manual updates via the modifier's update/modify
+    *       hook. This works, but is wasteful. For example, every time anything changes in
+    *       the modifier's args, we re-render the free/allocated/total summary when those
+    *       DOM nodes should 100% be left alone.
+    *
+    *       With fine-grained reactivity, such as what `@tracked` + auto-tracking
+    *       provides, we can *most optimizedly* update single processes at a time
+    *       (or even just a single property about thoseo processes).
+    *
+    *       Additionally, with fine-grained reactivity, we can pair down our d3 install
+    *       to "just the math parts", and get rid of all the rendering sub-packages.
+    *       This is likely ideal for low-connectivity, low-powered devices.
+    *
+    *       Where it could get tricky is the modelling of sibling data and calculating
+    *       overall size / percent of the arcs.
+    *       But FUD shouldn't keep us from trying, investigating, and reporting back to
+    *       the community with results.
     */
   <template>
-    <svg
-      width="100%" height="100%"
-      {{autosize this.updateSize}}
-      {{Sun this.data this.size
-        free=(getSize @data.freeMemory)
-        allocated=(getSize @data.allocatedMemory)
-        total=(getSize @data.totalMemory)
-      }}
-    >
-    </svg>
+    <div class='w-full h-full'>
+      <svg
+        width="100%" height="100%"
+        {{autosize this.updateSize}}
+        {{Sun this.data this.size
+          free=(getSize @data.freeMemory)
+          allocated=(getSize @data.allocatedMemory)
+          total=(getSize @data.totalMemory)
+          updateRoot=this.updateRoot
+          onHover=this.handleHover
+          onBlur=this.handleBlur
+        }}
+      ></svg>
+
+      {{#let (service 'settings') as |settings|}}
+        {{#if settings.showTable}}
+          <ProcessTable @data={{this.scopedData}} />
+        {{/if}}
+      {{/let}}
+
+      <Tooltip @process={{this.hoveredProcess}} />
+    </div>
   </template>
 }
 
@@ -67,6 +162,9 @@ interface Signature {
       free: string;
       allocated: string;
       total: string;
+      updateRoot: (newPid: number) => void;
+      onHover: (pid: number) => void;
+      onBlur: (pid: number) => void;
     }
   }
 }
@@ -80,6 +178,9 @@ class Sun extends Modifier<Signature> {
   declare root: HierarchyNode;
   declare forLater: [SunburstData, number];
   declare container: Element;
+  declare updateRoot: (pid: number) => void;
+  declare handleHover: (pid: number) => void;
+  declare handleBlur: (pid: number) => void;
 
   declare parent: d3.Selection<SVGCircleElement, HierarchyNode, null, undefined>;
 
@@ -100,6 +201,9 @@ class Sun extends Modifier<Signature> {
   ) {
     this.container = element;
     this.forLater = positional;
+    this.updateRoot = named.updateRoot;
+    this.handleHover = named.onHover;
+    this.handleBlur = named.onBlur;
 
     if (!this.isSetup) {
       this.setup();
@@ -125,24 +229,31 @@ class Sun extends Modifier<Signature> {
       .selectAll('.arc')
       .data(firstDescendant, (d) => (d as HierarchyNode).data.pid)
       .join(
-        enter => enter
-          .append('path')
-          .attr('class', 'arc')
-          .each(d => d.current = d)
-          .attr("fill", d => {
-            let ancestor: HierarchyNode | null | undefined = d;
+        enter => {
+          return enter
+            .append('path')
+            .attr('class', `arc
+                  focus:outline-none focus:stroke-2 focus:stroke-blue-500 hover:drop-shadow-md`)
+            .attr('tabindex', '0')
+            .each(d => d.current = d)
+            .attr("fill", d => {
+              let ancestor: HierarchyNode | null | undefined = d;
 
-            while (ancestor && parseInt(ancestor.data.pid, 10) > 1000 && (ancestor.depth || 0) > 1) {
-              ancestor = ancestor?.parent;
-            }
+              while (ancestor && (ancestor.data?.memory || 0) > 1000 && (ancestor.depth || 0) > 1) {
+                ancestor = ancestor?.parent;
+              }
 
-            // TODO: Find percent of ancestor's ring
+              // TODO: Find percent of ancestor's ring
 
-            return this.scale.color(( ancestor ?? d).data.pid);
-          })
-          .attr("d", d => this.dimensions.arc(d.current))
-          .attr("fill-opacity", d => arcVisible(d.current) ? (d.depth / MAX_VISIBLE_DEPTH) : 0)
-          .attr("pointer-events", d => arcVisible(d.current) ? "auto" : "none"),
+              return this.scale.color(`${( ancestor ?? d).data.pid}`);
+            })
+            .attr('id', d => `pid-${d.data.pid}`)
+            .attr("d", d => this.dimensions.arc(d.current))
+            .attr("fill-opacity", d => arcVisible(d.current) ? (d.depth / MAX_VISIBLE_DEPTH) : 0)
+            .attr("pointer-events", d => arcVisible(d.current) ? "auto" : "none")
+            .on('mouseover', (_, d) => this.handleHover(d.data.pid))
+            .on('mouseout', (_, d) => this.handleBlur(d.data.pid))
+        },
 
         update => update.transition()
           .duration(200)
@@ -152,6 +263,7 @@ class Sun extends Modifier<Signature> {
 
     this.selections.paths.filter(d => Boolean(d.children?.length))
       .style("cursor", "pointer")
+      // .on('click', (_, d) => this.handleHover(d.data.pid))
       .on("click", this.clicked);
 
     this.selections.labels = this.selections.labelG
@@ -162,6 +274,7 @@ class Sun extends Modifier<Signature> {
           .append('text')
           .attr('class', 'label')
           .attr("dy", "0.35em")
+          .attr('id', d => `pid-${d.data.pid}`)
           .attr("fill-opacity", d => +labelVisible(d.current ?? d))
           .attr("transform", d => this.dimensions.labelTransform(d.current))
           .text(d => d.data.name),
@@ -232,7 +345,10 @@ class Sun extends Modifier<Signature> {
   }
 
   clicked = (_event: Event, p: HierarchyNode) => {
-    this.parent.datum(p.parent || this.root);
+    let backNode = p.parent || this.root;
+    this.parent.datum(backNode);
+
+    this.updateRoot(p.data.pid);
 
     this.root.each(d => {
       d.target = {

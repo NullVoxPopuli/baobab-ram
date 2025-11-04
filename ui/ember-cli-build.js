@@ -33,7 +33,7 @@ module.exports = function (defaults) {
     staticAddonTestSupportTrees: true,
     staticAddonTrees: true,
     staticHelpers: true,
-    staticModifiers: true,
+    staticModifiers: false,
     staticComponents: true,
     staticAppPaths: true,
     skipBabel: [

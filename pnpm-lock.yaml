@@ -49,6 +49,7 @@ importers:
       '@embroider/compat': ^1.8.3
       '@embroider/core': ^1.8.3
       '@embroider/webpack': ^1.8.3
+      '@floating-ui/dom': ^1.0.2
       '@glimmer/component': ^1.1.2
       '@glimmer/tracking': ^1.1.2
       '@glint/core': ^0.9.4
@@ -100,6 +101,7 @@ importers:
       d3-scale: ^4.0.2
       d3-scale-chromatic: ^3.0.0
       d3-shape: ^3.1.0
+      ember-async-data: ^0.6.0
       ember-auto-import: ^2.4.2
       ember-cached-decorator-polyfill: ^0.1.4
       ember-cli: ~4.7.0
@@ -123,6 +125,7 @@ importers:
       ember-template-imports: ^3.1.1
       ember-template-lint: ^4.14.0
       ember-tracked-storage-polyfill: ^1.0.0
+      ember-velcro: ^1.0.0
       eslint: ^7.32.0
       eslint-config-prettier: ^8.5.0
       eslint-plugin-ember: ^11.0.6
@@ -142,15 +145,18 @@ importers:
       typescript: ^4.8.3
       webpack: ^5.74.0
     dependencies:
+      '@floating-ui/dom': 1.0.2
       d3: 7.6.1
       d3-format: 3.1.0
       d3-hierarchy: 3.1.2
       d3-interpolate: 3.0.1
       d3-scale: 4.0.2
       d3-shape: 3.1.0
+      ember-async-data: 0.6.0_@babel+core@7.19.0
       ember-modifier: 3.2.7_@babel+core@7.19.0
       ember-resources: 5.4.0_wwyzebdhinabrrbaotf4h6m5du
       ember-tracked-storage-polyfill: 1.0.0
+      ember-velcro: link:../../ember-velcro
       filesize: 9.0.11
       tracked-built-ins: 3.1.0
     devDependencies:
@@ -339,7 +345,7 @@ packages:
       '@babel/core': ^7.0.0
     dependencies:
       '@babel/compat-data': 7.19.0
-      '@babel/core': 7.19.0
+      '@babel/core': 7.19.0_supports-color@8.1.1
       '@babel/helper-validator-option': 7.18.6
       browserslist: 4.21.3
       semver: 6.3.0
@@ -1897,7 +1903,6 @@ packages:
       semver: 7.3.7
     transitivePeerDependencies:
       - supports-color
-    dev: true
 
   /@embroider/addon-shim/1.8.3:
     resolution: {integrity: sha512-7pyHwzT6ESXc3nZsB8rfnirLkUhQWdvj6CkYH+0MUPN74mX4rslf7pnBqZE/KZkW3uBIaBYvU8fxi0hcKC/Paw==}
@@ -2182,6 +2187,16 @@ packages:
     transitivePeerDependencies:
       - supports-color
     dev: true
+
+  /@floating-ui/core/1.0.1:
+    resolution: {integrity: sha512-bO37brCPfteXQfFY0DyNDGB3+IMe4j150KFQcgJ5aBP295p9nBGeHEs/p0czrRbtlHq4Px/yoPXO/+dOCcF4uA==}
+    dev: false
+
+  /@floating-ui/dom/1.0.2:
+    resolution: {integrity: sha512-5X9WSvZ8/fjy3gDu8yx9HAA4KG1lazUN2P4/VnaXLxTO9Dz53HI1oYoh1OlhqFNlHgGDiwFX5WhFCc2ljbW3yA==}
+    dependencies:
+      '@floating-ui/core': 1.0.1
+    dev: false
 
   /@glimmer/component/1.1.2_@babel+core@7.19.0:
     resolution: {integrity: sha512-XyAsEEa4kWOPy+gIdMjJ8XlzA3qrGH55ZDv6nA16ibalCR17k74BI0CztxuRds+Rm6CtbUVgheCVlcCULuqD7A==}
@@ -7285,6 +7300,20 @@ packages:
       minimalistic-crypto-utils: 1.0.1
     dev: true
 
+  /ember-async-data/0.6.0_@babel+core@7.19.0:
+    resolution: {integrity: sha512-zgE5N4DVHr9b6Hlnev6Z8zMyD7mII/ewE/6t+7eHTrshe9vwSTA6eiT5fCKmHeSob5ThU51J+Alwl2QACtsL/A==}
+    engines: {node: 12.* || >= 14}
+    dependencies:
+      '@ember/test-waiters': 3.0.2
+      ember-cli-babel: 7.26.11
+      ember-cli-htmlbars: 5.7.2
+      ember-cli-typescript: 4.2.1
+      ember-destroyable-polyfill: 2.0.3_@babel+core@7.19.0
+    transitivePeerDependencies:
+      - '@babel/core'
+      - supports-color
+    dev: false
+
   /ember-auto-import/1.12.2:
     resolution: {integrity: sha512-gLqML2k77AuUiXxWNon1FSzuG1DV7PEPpCLCU5aJvf6fdL6rmFfElsZRh+8ELEB/qP9dT+LHjNEunVzd2dYc8A==}
     engines: {node: '>= 10.*'}
@@ -7701,7 +7730,6 @@ packages:
       walk-sync: 2.2.0
     transitivePeerDependencies:
       - supports-color
-    dev: true
 
   /ember-cli-typescript/5.1.1:
     resolution: {integrity: sha512-DbzATYWY8nbXwSxXqtK8YlqGJTcyFyL+eg6IGCc2ur0AMnq/H+o6Z9np9eGoq1sI+HwX7vBkOVoD3k0WurAwXg==}
@@ -7946,7 +7974,6 @@ packages:
     transitivePeerDependencies:
       - '@babel/core'
       - supports-color
-    dev: true
 
   /ember-fetch/8.1.2:
     resolution: {integrity: sha512-TVx24/jrvDIuPL296DV0hBwp7BWLcSMf0I8464KGz01sPytAB+ZAePbc9ooBTJDkKZEGFgatJa4nj3yF1S9Bpw==}

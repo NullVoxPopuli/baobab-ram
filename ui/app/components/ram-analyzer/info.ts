@@ -6,15 +6,15 @@ import { Resource, use } from 'ember-resources';
 
 import type Settings from 'ui/services/settings';
 
-export type NestedSunburstData =
-  | { name: string; pid: string; value?: never; children: NestedSunburstData[] }
-  | { name: string; pid: string; value: number };
-
-export type SunburstData = {
-  pid: string;
+export interface ProcessInfo {
+  pid: number;
   name: string;
-  value?: never;
-  children: NestedSunburstData[];
+  memory: number;
+  rss: number;
+  shared: number;
+}
+export type SunburstData = ProcessInfo & {
+  children: SunburstData[];
 };
 
 export class Info extends Resource {
