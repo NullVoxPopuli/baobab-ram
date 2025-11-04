@@ -29,6 +29,9 @@
   "author": "NullVoxPopuli",
   "license": "MIT",
   "packageManager": "pnpm@10.20.0",
+  "engines": {
+    "node": ">= 22.16.0"
+  },
   "pnpm": {
     "overrides": {
       "@types/eslint": "^7.0.0"

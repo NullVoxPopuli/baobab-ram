@@ -26,9 +26,10 @@
     "express-ws": "^5.0.2"
   },
   "engines": {
-    "node": "16.* || 18.*"
+    "node": ">= 22.16.0"
   },
   "devDependencies": {
+    "@nullvoxpopuli/eslint-configs": "^5.3.4",
     "@types/server": "^1.0.5",
     "nodemon": "^2.0.19"
   }
