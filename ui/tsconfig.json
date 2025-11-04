@@ -23,7 +23,11 @@
       "*": [
         "types/*"
       ]
-    }
+    },
+    "types": [
+      "@embroider/core/virtual",
+      "vite/client"
+    ]
   },
   "include": [
     "app/**/*",
