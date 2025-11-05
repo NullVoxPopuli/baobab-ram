@@ -13,9 +13,10 @@ export const DefaultTooltip: TOC<{
     <tbody>
       <tr><th scope="row">PID</th>   <td>{{@process.pid}}</td></tr>
       <tr><th scope="row">Name</th>  <td>{{@process.name}}</td></tr>
-      <tr><th scope="row">Memory</th><td>{{getSize @process.memory}}</td></tr>
-      <tr><th scope="row">RSS</th>   <td>{{getSize @process.rss}}</td></tr>
-      <tr><th scope="row">Shared</th><td>{{getSize @process.shared}}</td></tr>
+      <tr><th scope="row">Command</th>  <td>{{@process.command}}</td></tr>
+      <tr><th scope="row">Memory</th><td>{{getSize @process.memory}} / {{getSize @process.totalMemory}}</td></tr>
+      <tr><th scope="row">RSS</th>   <td>{{getSize @process.rss}} / {{getSize @process.totalRss}}</td></tr>
+      <tr><th scope="row">Shared</th><td>{{getSize @process.shared}} / {{getSize @process.totalShared}}</td></tr>
     </tbody>
   </table>
 </template>;
